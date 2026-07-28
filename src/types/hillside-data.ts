@@ -29,10 +29,10 @@ export type ProgramSchedule = {
 export type MenuDay = {
   day: WeekDay;
   date: string;
-  breakfast: string;
-  lunch: string;
-  dinner: string;
-  snack: string;
+  breakfast: string[];
+  lunch: string[];
+  dinner: string[];
+  soupOfTheDay: string[];
 };
 
 export type HillsidePublicData = {

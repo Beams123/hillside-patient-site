@@ -12,7 +12,7 @@ const meals = [
   { key: "breakfast", label: "Breakfast" },
   { key: "lunch", label: "Lunch" },
   { key: "dinner", label: "Dinner" },
-  { key: "snack", label: "Snack" },
+  { key: "soupOfTheDay", label: "Soup of the Day" },
 ] as const;
 
 type MenuDayCardProps = {
@@ -62,19 +62,32 @@ export function MenuDayCard({ menuDay, isToday }: MenuDayCardProps) {
         {meals.map((meal) => (
           <div
             key={meal.key}
-            className="grid gap-1 px-5 py-4 sm:grid-cols-[7rem_1fr] sm:gap-4 sm:px-6"
+            className="grid gap-2 px-5 py-4 sm:grid-cols-[8.5rem_1fr] sm:gap-4 sm:px-6"
           >
             <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-muted">
               {meal.label}
             </dt>
-            <dd
-              className={
-                menuDay[meal.key]
-                  ? "text-sm leading-6 text-brand-cream"
-                  : "text-sm italic leading-6 text-brand-muted"
-              }
-            >
-              {menuDay[meal.key] || "Not posted"}
+            <dd>
+              {menuDay[meal.key].length > 0 ? (
+                <ul className="grid gap-x-8 gap-y-2 sm:grid-cols-2">
+                  {menuDay[meal.key].map((item, index) => (
+                    <li
+                      key={`${meal.key}-${index}-${item}`}
+                      className="flex gap-3 text-sm leading-6 text-brand-cream"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="mt-[0.65rem] size-1.5 shrink-0 rounded-full bg-brand-gold"
+                      />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <span className="text-sm italic leading-6 text-brand-muted">
+                  Not posted
+                </span>
+              )}
             </dd>
           </div>
         ))}

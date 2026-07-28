@@ -19,7 +19,7 @@ The bridge can return only:
 
 - current schedule date and week label;
 - CSS and ATS group time, topic, and facilitator;
-- Monday–Sunday breakfast, lunch, dinner, and snack text.
+- Monday–Sunday breakfast, lunch, dinner, and soup-of-the-day item lists.
 
 It does not read or return patient names, Kipu data, staffing assignments,
 recovery-specialist posts, management lists, notes, formulas, comments, or any
@@ -84,8 +84,10 @@ The separate menu workbook is:
 [Hillside Website Menu](https://docs.google.com/spreadsheets/d/1qUxUFHaCBmZP5ygjMNX49Q1Kxjbx2QjU3MUQj5KSQdA/)
 
 Share edit access only with specific staff who maintain public menu content.
-They should edit only the yellow Breakfast, Lunch, Dinner, and Snack cells.
-Dates update automatically. Blank cells display as “Not posted” on the site.
+They should use the `Menu Items` tab and edit only the yellow Item 1–Item 8
+cells. Each row is one meal, and each food goes in its own ordinary cell.
+No keyboard shortcut or separator is required. Dates update automatically.
+Blank meals display as “Not posted” on the site.
 
 Never enter patient names, allergies, preferences, diagnoses, medications,
 appointments, or other personal or clinical information in this workbook.
@@ -98,10 +100,11 @@ The bridge reads these ranges and no others:
 | --- | --- | --- | --- |
 | Group Schedules and RS Posts | current weekly tab | CSS time cells `A3`, `A5`, `A7`, `A9`, `A11` plus the matching current-day topic and following facilitator cells in `B`, `D`, `F`, `H`, `J`, `L`, or `N` | CSS schedule |
 | Group Schedules and RS Posts | current weekly tab | ATS time cells `Q3`, `Q5`, `Q7`, `Q9` plus the matching current-day topic and following facilitator cells in `R`, `T`, `V`, `X`, `Z`, `AB`, or `AD` | ATS schedule |
-| Hillside Website Menu | `Menu` | `A3:F9` | Meal descriptions |
+| Hillside Website Menu | `Menu Items` | `D4:K31` | Breakfast, lunch, dinner, and soup-of-the-day items |
 
-For menu rows, the bridge constructs the public day and date itself. It returns
-only columns C–F, so accidental text in the day/date columns cannot be exposed.
+For menu rows, the bridge constructs the public day, date, and meal assignment
+itself. It reads only the yellow item cells in columns D–K, so accidental text
+in the Day, Date, or Meal columns cannot be exposed.
 
 ## Updating the bridge
 

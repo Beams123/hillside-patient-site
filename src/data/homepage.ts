@@ -37,7 +37,8 @@ export const resourcePreviews: ResourcePreview[] = [
   {
     id: "weekly-menu",
     title: "Weekly menu",
-    description: "See breakfast, lunch, dinner, and snack information by day.",
+    description:
+      "See breakfast, lunch, dinner, and soup-of-the-day information.",
     status: "Available",
     href: "/menu",
     icon: "menu",

@@ -15,6 +15,7 @@ import {
 const feedRevalidationSeconds = 300;
 const maximumResponseCharacters = 100_000;
 const maximumGroupsPerProgram = 12;
+const maximumMenuItemsPerMeal = 8;
 
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 const displayTimePattern = /^(\d{1,2}):([0-5]\d) (AM|PM)$/;
@@ -140,17 +141,48 @@ function parseProgramSchedule(
   };
 }
 
-function parseMenuDay(value: unknown): MenuDay | null {
+function parseMenuItems(
+  value: unknown,
+  legacyVersion: boolean,
+): string[] | null {
+  if (legacyVersion) {
+    const legacyValue = readString(value, 240, true);
+
+    return legacyValue === null
+      ? null
+      : legacyValue.length > 0
+        ? [legacyValue]
+        : [];
+  }
+
+  if (
+    !Array.isArray(value) ||
+    value.length > maximumMenuItemsPerMeal
+  ) {
+    return null;
+  }
+
+  const items = value.map((item) => readString(item, 120));
+
+  return items.every((item): item is string => item !== null)
+    ? items
+    : null;
+}
+
+function parseMenuDay(value: unknown, legacyVersion: boolean): MenuDay | null {
   if (!isRecord(value)) {
     return null;
   }
 
   const day = readString(value.day, 9);
   const date = readString(value.date, 10);
-  const breakfast = readString(value.breakfast, 240, true);
-  const lunch = readString(value.lunch, 240, true);
-  const dinner = readString(value.dinner, 240, true);
-  const snack = readString(value.snack, 240, true);
+  const breakfast = parseMenuItems(value.breakfast, legacyVersion);
+  const lunch = parseMenuItems(value.lunch, legacyVersion);
+  const dinner = parseMenuItems(value.dinner, legacyVersion);
+  const soupOfTheDay = parseMenuItems(
+    legacyVersion ? value.snack : value.soupOfTheDay,
+    legacyVersion,
+  );
 
   if (
     day === null ||
@@ -160,7 +192,7 @@ function parseMenuDay(value: unknown): MenuDay | null {
     breakfast === null ||
     lunch === null ||
     dinner === null ||
-    snack === null
+    soupOfTheDay === null
   ) {
     return null;
   }
@@ -171,15 +203,20 @@ function parseMenuDay(value: unknown): MenuDay | null {
     breakfast,
     lunch,
     dinner,
-    snack,
+    soupOfTheDay,
   };
 }
 
 function parsePublicData(value: unknown): HillsidePublicData | null {
-  if (!isRecord(value) || value.ok !== true || value.version !== 1) {
+  if (
+    !isRecord(value) ||
+    value.ok !== true ||
+    (value.version !== 1 && value.version !== 2)
+  ) {
     return null;
   }
 
+  const legacyVersion = value.version === 1;
   const generatedAt = readString(value.generatedAt, 40);
   const scheduleDate = readString(value.scheduleDate, 10);
   const weekLabel = readString(value.weekLabel, 40);
@@ -202,7 +239,7 @@ function parsePublicData(value: unknown): HillsidePublicData | null {
   const schedules = programCodes.map((code) =>
     parseProgramSchedule(code, schedulesValue[code]),
   );
-  const menu = menuValue.map(parseMenuDay);
+  const menu = menuValue.map((day) => parseMenuDay(day, legacyVersion));
 
   if (
     schedules.some((schedule) => schedule === null) ||

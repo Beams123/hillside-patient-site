@@ -11,7 +11,10 @@ const MENU_SPREADSHEET_ID =
   "1qUxUFHaCBmZP5ygjMNX49Q1Kxjbx2QjU3MUQj5KSQdA";
 const FACILITY_TIME_ZONE = "America/New_York";
 const CACHE_SECONDS = 300;
-const MENU_RANGE = "A3:F9";
+const PUBLIC_PAYLOAD_VERSION = 2;
+const MENU_ITEMS_RANGE = "D4:K31";
+const MENU_ITEMS_PER_MEAL = 8;
+const MEALS_PER_DAY = 4;
 
 const PROGRAM_CONFIGS = [
   {
@@ -48,7 +51,7 @@ function doGet() {
     output.setContent(
       JSON.stringify({
         ok: false,
-        version: 1,
+        version: PUBLIC_PAYLOAD_VERSION,
         generatedAt: new Date().toISOString(),
         message: "Public information is temporarily unavailable.",
       }),
@@ -68,14 +71,14 @@ function authorizeBridge() {
 
 function getCachedPayload_() {
   const cache = CacheService.getScriptCache();
-  const cached = cache.get("public-payload-v1");
+  const cached = cache.get("public-payload-v2");
 
   if (cached) {
     return JSON.parse(cached);
   }
 
   const payload = buildPayload_();
-  cache.put("public-payload-v1", JSON.stringify(payload), CACHE_SECONDS);
+  cache.put("public-payload-v2", JSON.stringify(payload), CACHE_SECONDS);
   return payload;
 }
 
@@ -102,7 +105,7 @@ function buildPayload_() {
 
   return {
     ok: true,
-    version: 1,
+    version: PUBLIC_PAYLOAD_VERSION,
     generatedAt: now.toISOString(),
     scheduleDate: scheduleDate,
     weekLabel: week.label,
@@ -186,12 +189,12 @@ function normalizeScheduleContent_(topic, facilitator) {
 
 function readMenu_(week) {
   const menuValueRange = getFormattedRanges_(MENU_SPREADSHEET_ID, [
-    quoteSheetName_("Menu") + "!" + MENU_RANGE,
+    quoteSheetName_("Menu Items") + "!" + MENU_ITEMS_RANGE,
   ])[0];
   const values = menuValueRange.values || [];
 
   return DAY_NAMES.map(function (day, index) {
-    const row = values[index] || [];
+    const firstMealRow = index * MEALS_PER_DAY;
     const date = new Date(
       week.monday.getTime() + index * 24 * 60 * 60 * 1000,
     );
@@ -199,11 +202,19 @@ function readMenu_(week) {
     return {
       day: day,
       date: Utilities.formatDate(date, FACILITY_TIME_ZONE, "yyyy-MM-dd"),
-      breakfast: sanitizePublicText_(row[2], 240),
-      lunch: sanitizePublicText_(row[3], 240),
-      dinner: sanitizePublicText_(row[4], 240),
-      snack: sanitizePublicText_(row[5], 240),
+      breakfast: sanitizeMenuItems_(values[firstMealRow]),
+      lunch: sanitizeMenuItems_(values[firstMealRow + 1]),
+      dinner: sanitizeMenuItems_(values[firstMealRow + 2]),
+      soupOfTheDay: sanitizeMenuItems_(values[firstMealRow + 3]),
     };
+  });
+}
+
+function sanitizeMenuItems_(row) {
+  return Array.from({ length: MENU_ITEMS_PER_MEAL }, function (_, index) {
+    return sanitizePublicText_((row || [])[index], 120);
+  }).filter(function (item) {
+    return item.length > 0;
   });
 }
 

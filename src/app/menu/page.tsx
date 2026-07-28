@@ -55,8 +55,8 @@ export default async function MenuPage() {
               Weekly menu
             </h1>
             <p className="mt-6 max-w-2xl text-pretty text-lg leading-8 text-brand-muted">
-              A simple day-by-day view of breakfast, lunch, dinner, and snack
-              information.
+              A simple day-by-day view of breakfast, lunch, dinner, and the
+              soup of the day.
             </p>
 
             {hasMenu ? (
