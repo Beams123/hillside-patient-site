@@ -90,7 +90,7 @@ export default async function MenuPage() {
                   </p>
                 </div>
 
-                <div className="grid gap-5 lg:grid-cols-2">
+                <div className="mx-auto max-w-4xl space-y-4">
                   {dataResult.data.menu.map((menuDay) => (
                     <MenuDayCard
                       key={menuDay.date}
