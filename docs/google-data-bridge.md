@@ -56,14 +56,23 @@ Complete these steps while signed in to `sahearn@hillsidedetox.com`:
 8. Open the `/exec` URL in a private browser window. Confirm the response
    contains only `generatedAt`, `scheduleDate`, `weekLabel`, `schedules`, and
    `menu`, plus the `ok` and `version` markers.
-9. Add the URL to the website host as the server-only environment variable
-   `HILLSIDE_DATA_FEED_URL`. For local development, put it in `.env.local`:
+9. Copy the deployed Web app URL ending in `/exec`. Send that URL to the person
+   configuring the website (or paste it into the Codex task). They will add it
+   as the server-only environment variable `HILLSIDE_DATA_FEED_URL`.
+
+   To configure it manually for local development, open the hidden `.env.local`
+   file in the repository root and replace its existing
+   `HILLSIDE_DATA_FEED_URL` line with:
 
    ```text
    HILLSIDE_DATA_FEED_URL=https://script.google.com/macros/s/DEPLOYMENT_ID/exec
    ```
 
-10. Restart the local development server after adding the variable.
+   Use the complete URL copied from Apps Script, without quotation marks. The
+   `.env.local` file is intentionally excluded from Git.
+10. Restart the local development server so Next.js reads the new value. In the
+    terminal running the site, press **Control+C**, then run `npm run dev`
+    again. Codex can perform steps 9 and 10 after receiving the `/exec` URL.
 
 Do not prefix the variable with `NEXT_PUBLIC_`. The browser does not need the
 bridge URL; only the Next.js server fetches it.

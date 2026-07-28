@@ -51,10 +51,6 @@ export function MenuDayCard({ menuDay, isToday }: MenuDayCardProps) {
               Today
             </span>
           ) : null}
-          <span className="hidden text-xs font-semibold uppercase tracking-[0.12em] text-brand-muted sm:inline">
-            <span className="group-open:hidden">View meals</span>
-            <span className="hidden group-open:inline">Hide meals</span>
-          </span>
           <ChevronDown
             className="size-5 text-brand-gold transition-transform duration-200 group-open:rotate-180"
             aria-hidden="true"
