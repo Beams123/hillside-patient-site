@@ -134,7 +134,7 @@ export default async function Home() {
               </p>
             </div>
 
-            <div className="mt-10 grid gap-5 lg:grid-cols-2">
+            <div className="mt-10 grid items-start gap-5 lg:grid-cols-2">
               {programSchedules.map((schedule) => (
                 <ScheduleCard
                   key={schedule.id}
