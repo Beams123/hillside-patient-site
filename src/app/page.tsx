@@ -3,16 +3,23 @@ import { ArrowDown } from "lucide-react";
 import { CurrentDate } from "@/components/current-date";
 import { ResourceCard } from "@/components/resource-card";
 import { ScheduleCard } from "@/components/schedule-card";
+import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { homepageContent, resourcePreviews } from "@/data/homepage";
 import {
-  homepageContent,
-  programSchedules,
-  resourcePreviews,
-} from "@/data/homepage";
+  getEmptyProgramSchedules,
+  getHillsidePublicData,
+} from "@/lib/hillside-data";
 
-export default function Home() {
+export default async function Home() {
+  const dataResult = await getHillsidePublicData();
+  const isScheduleAvailable = dataResult.status === "available";
+  const programSchedules = isScheduleAvailable
+    ? dataResult.data.schedules
+    : getEmptyProgramSchedules();
+
   return (
-    <div id="top" className="min-h-screen overflow-x-hidden bg-background">
+    <div id="top" className="min-h-screen overflow-x-clip bg-background">
       <a
         href="#main-content"
         className="fixed left-4 top-4 z-[100] -translate-y-24 rounded-md bg-brand-gold px-4 py-3 text-sm font-semibold text-brand-ink transition-transform focus:translate-y-0"
@@ -58,7 +65,7 @@ export default function Home() {
                 href="#schedule"
                 className="mt-9 inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-brand-gold px-5 py-3 text-sm font-semibold text-brand-ink shadow-[0_10px_35px_rgba(210,176,103,0.12)] transition-colors hover:bg-brand-gold-light"
               >
-                View today&apos;s sample schedule
+                View today&apos;s schedule
                 <ArrowDown className="size-4" aria-hidden="true" />
               </a>
             </div>
@@ -121,13 +128,19 @@ export default function Home() {
                 </h2>
               </div>
               <p className="max-w-xl text-sm leading-6 text-brand-muted lg:justify-self-end">
-                {homepageContent.scheduleNote}
+                {isScheduleAvailable
+                  ? `Showing the CSS and ATS group information approved for ${dataResult.data.scheduleDate}.`
+                  : "The secure schedule connection is not active yet. No internal workbook content or placeholder group details are being shown."}
               </p>
             </div>
 
             <div className="mt-10 grid gap-5 lg:grid-cols-2">
               {programSchedules.map((schedule) => (
-                <ScheduleCard key={schedule.id} schedule={schedule} />
+                <ScheduleCard
+                  key={schedule.id}
+                  schedule={schedule}
+                  isAvailable={isScheduleAvailable}
+                />
               ))}
             </div>
           </div>
@@ -150,9 +163,8 @@ export default function Home() {
                 What you need, in one place
               </h2>
               <p className="mt-5 max-w-2xl text-base leading-7 text-brand-muted">
-                Preview the information areas planned for this site. Each can
-                become its own focused, easy-to-use page as verified content is
-                added.
+                Open the weekly menu or preview the focused information areas
+                planned for this site as verified content is added.
               </p>
             </div>
 
@@ -186,21 +198,14 @@ export default function Home() {
               </p>
             </div>
             <p className="rounded-xl border border-brand-gold/20 bg-brand-gold/[0.05] px-5 py-4 text-sm leading-6 text-brand-muted lg:max-w-sm">
-              This prototype displays sample content only and does not collect
-              personal or clinical information.
+              This site displays general patient information and does not
+              collect personal or clinical information.
             </p>
           </div>
         </section>
       </main>
 
-      <footer className="border-t border-brand-gold/15 bg-black">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-5 py-8 text-sm text-brand-muted sm:px-8 md:flex-row md:items-center md:justify-between lg:px-12">
-          <p>Hillside Detox · Patient information</p>
-          <p className="text-xs uppercase tracking-[0.16em] text-brand-gold/80">
-            Sample content for review
-          </p>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

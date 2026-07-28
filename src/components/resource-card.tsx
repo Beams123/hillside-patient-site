@@ -7,6 +7,7 @@ import {
   UsersRound,
   type LucideIcon,
 } from "lucide-react";
+import Link from "next/link";
 
 import type { ResourcePreview } from "@/data/homepage";
 
@@ -26,8 +27,8 @@ type ResourceCardProps = {
 export function ResourceCard({ resource }: ResourceCardProps) {
   const Icon = icons[resource.icon];
 
-  return (
-    <article className="group min-h-56 rounded-2xl border border-white/[0.09] bg-brand-panel p-6 transition-colors hover:border-brand-gold/30 sm:p-7">
+  const content = (
+    <>
       <div className="flex items-start justify-between gap-4">
         <span className="flex size-11 items-center justify-center rounded-xl border border-brand-gold/20 bg-brand-gold/[0.07] text-brand-gold">
           <Icon className="size-5" strokeWidth={1.75} aria-hidden="true" />
@@ -42,6 +43,20 @@ export function ResourceCard({ resource }: ResourceCardProps) {
       <p className="mt-3 text-sm leading-6 text-brand-muted">
         {resource.description}
       </p>
+    </>
+  );
+
+  return resource.href ? (
+    <Link
+      href={resource.href}
+      className="group min-h-56 rounded-2xl border border-white/[0.09] bg-brand-panel p-6 transition-colors hover:border-brand-gold/40 sm:p-7"
+      aria-label={`${resource.title}: ${resource.description}`}
+    >
+      {content}
+    </Link>
+  ) : (
+    <article className="group min-h-56 rounded-2xl border border-white/[0.09] bg-brand-panel p-6 sm:p-7">
+      {content}
     </article>
   );
 }

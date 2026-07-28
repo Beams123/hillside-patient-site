@@ -1,23 +1,9 @@
-export type ScheduleGroup = {
-  time: string;
-  timeValue: string;
-  topic: string;
-  facilitator: string;
-};
-
-export type ProgramSchedule = {
-  id: string;
-  label: string;
-  title: string;
-  location: string;
-  groups: ScheduleGroup[];
-};
-
 export type ResourcePreview = {
   id: string;
   title: string;
   description: string;
-  status: "Planned";
+  status: "Available" | "Planned";
+  href?: string;
   icon:
     | "menu"
     | "directory"
@@ -28,10 +14,10 @@ export type ResourcePreview = {
 };
 
 export const navigationItems = [
-  { label: "Today", href: "#top" },
-  { label: "Schedule", href: "#schedule" },
-  { label: "Resources", href: "#resources" },
-  { label: "Info", href: "#information" },
+  { label: "Today", href: "/" },
+  { label: "Schedule", href: "/#schedule" },
+  { label: "Menu", href: "/menu" },
+  { label: "Resources", href: "/#resources" },
 ] as const;
 
 export const homepageContent = {
@@ -40,88 +26,20 @@ export const homepageContent = {
   previewLabel: "Site preview",
   introduction:
     "A simple, welcoming place to see the day ahead and find useful facility information.",
-  scheduleNote:
-    "The times, topics, locations, and facilitator labels below are placeholders for design review—not an active Hillside schedule.",
   quickLook: [
-    "Review the sample schedule for your program area.",
-    "See which patient resource pages are planned next.",
+    "Review today’s CSS or ATS group schedule.",
+    "Check the weekly menu and available patient resources.",
     "Ask a staff member whenever you need help finding information.",
   ],
 } as const;
-
-export const programSchedules: ProgramSchedule[] = [
-  {
-    id: "asam-37",
-    label: "Program area",
-    title: "ASAM 3.7",
-    location: "Location to be confirmed",
-    groups: [
-      {
-        time: "9:00 AM",
-        timeValue: "09:00",
-        topic: "Morning check-in",
-        facilitator: "Program staff",
-      },
-      {
-        time: "10:30 AM",
-        timeValue: "10:30",
-        topic: "Wellness discussion",
-        facilitator: "Team member",
-      },
-      {
-        time: "1:00 PM",
-        timeValue: "13:00",
-        topic: "Daily skills group",
-        facilitator: "Program staff",
-      },
-      {
-        time: "3:00 PM",
-        timeValue: "15:00",
-        topic: "Afternoon reflection",
-        facilitator: "Team member",
-      },
-    ],
-  },
-  {
-    id: "asam-35",
-    label: "Program area",
-    title: "ASAM 3.5",
-    location: "Location to be confirmed",
-    groups: [
-      {
-        time: "9:30 AM",
-        timeValue: "09:30",
-        topic: "Daily planning",
-        facilitator: "Program staff",
-      },
-      {
-        time: "11:00 AM",
-        timeValue: "11:00",
-        topic: "Community discussion",
-        facilitator: "Team member",
-      },
-      {
-        time: "1:30 PM",
-        timeValue: "13:30",
-        topic: "Guided activity",
-        facilitator: "Program staff",
-      },
-      {
-        time: "3:30 PM",
-        timeValue: "15:30",
-        topic: "Community wrap-up",
-        facilitator: "Team member",
-      },
-    ],
-  },
-];
 
 export const resourcePreviews: ResourcePreview[] = [
   {
     id: "weekly-menu",
     title: "Weekly menu",
     description: "See breakfast, lunch, dinner, and snack information by day.",
-    status: "Planned",
+    status: "Available",
+    href: "/menu",
     icon: "menu",
   },
   {
