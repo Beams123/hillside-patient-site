@@ -90,20 +90,11 @@ function buildPayload_() {
     Number(Utilities.formatDate(now, FACILITY_TIME_ZONE, "u")) - 1;
   const week = getWeekDetails_(now);
 
-  const sourceSpreadsheet = SpreadsheetApp.openById(
-    SOURCE_SCHEDULE_SPREADSHEET_ID,
-  );
-  const scheduleSheet = sourceSpreadsheet.getSheetByName(week.label);
-
-  if (!scheduleSheet) {
-    throw new Error("Current schedule sheet not found");
-  }
-
   const schedules = {};
 
   PROGRAM_CONFIGS.forEach(function (config) {
     schedules[config.code] = readProgramSchedule_(
-      scheduleSheet,
+      week.label,
       config,
       dayIndex,
     );
@@ -135,22 +126,23 @@ function getWeekDetails_(date) {
   };
 }
 
-function readProgramSchedule_(sheet, config, dayIndex) {
+function readProgramSchedule_(sheetName, config, dayIndex) {
   const contentColumn = config.contentColumns[dayIndex];
   const cellReferences = [];
+  const sheetReference = quoteSheetName_(sheetName) + "!";
 
   config.timeRows.forEach(function (row) {
-    cellReferences.push(config.timeColumn + row);
-    cellReferences.push(contentColumn + row);
-    cellReferences.push(contentColumn + (row + 1));
+    cellReferences.push(sheetReference + config.timeColumn + row);
+    cellReferences.push(sheetReference + contentColumn + row);
+    cellReferences.push(sheetReference + contentColumn + (row + 1));
   });
 
-  const values = sheet
-    .getRangeList(cellReferences)
-    .getRanges()
-    .map(function (range) {
-      return range.getDisplayValue();
-    });
+  const values = getFormattedRanges_(
+    SOURCE_SCHEDULE_SPREADSHEET_ID,
+    cellReferences,
+  ).map(function (valueRange) {
+    return getFirstCellValue_(valueRange);
+  });
 
   return config.timeRows.reduce(function (groups, timeRow, index) {
     const time = parseTime_(values[index * 3]);
@@ -171,14 +163,10 @@ function readProgramSchedule_(sheet, config, dayIndex) {
 }
 
 function readMenu_(week) {
-  const menuSpreadsheet = SpreadsheetApp.openById(MENU_SPREADSHEET_ID);
-  const menuSheet = menuSpreadsheet.getSheetByName("Menu");
-
-  if (!menuSheet) {
-    return [];
-  }
-
-  const values = menuSheet.getRange(MENU_RANGE).getDisplayValues();
+  const menuValueRange = getFormattedRanges_(MENU_SPREADSHEET_ID, [
+    quoteSheetName_("Menu") + "!" + MENU_RANGE,
+  ])[0];
+  const values = menuValueRange.values || [];
 
   return DAY_NAMES.map(function (day, index) {
     const row = values[index] || [];
@@ -195,6 +183,35 @@ function readMenu_(week) {
       snack: sanitizePublicText_(row[5], 240),
     };
   });
+}
+
+function getFormattedRanges_(spreadsheetId, ranges) {
+  const response = Sheets.Spreadsheets.Values.batchGet(spreadsheetId, {
+    ranges: ranges,
+    majorDimension: "ROWS",
+    valueRenderOption: "FORMATTED_VALUE",
+  });
+  const valueRanges = response.valueRanges || [];
+
+  if (valueRanges.length !== ranges.length) {
+    throw new Error("Expected spreadsheet ranges were not returned");
+  }
+
+  return valueRanges;
+}
+
+function getFirstCellValue_(valueRange) {
+  const values = valueRange.values || [];
+
+  if (!values[0] || values[0][0] === undefined) {
+    return "";
+  }
+
+  return String(values[0][0]);
+}
+
+function quoteSheetName_(sheetName) {
+  return "'" + sheetName.replace(/'/g, "''") + "'";
 }
 
 function parseTime_(value) {

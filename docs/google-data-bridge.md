@@ -42,6 +42,10 @@ Complete these steps while signed in to `sahearn@hillsidedetox.com`:
 3. In Project Settings, enable **Show "appsscript.json" manifest file in
    editor**, then replace that file with
    `google-apps-script/appsscript.json`.
+   The manifest enables the Advanced Google Sheets service while retaining the
+   `spreadsheets.readonly` OAuth scope. Confirm **Google Sheets API** appears
+   under **Services** in the editor; if it does not, click **+** beside
+   Services and add it.
 4. Select `authorizeBridge` in the function menu and click **Run**. Approve the
    read-only spreadsheet permission for the work account.
 5. Click **Deploy → New deployment → Web app**.
