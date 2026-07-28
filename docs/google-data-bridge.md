@@ -18,17 +18,15 @@ The bridge in `google-apps-script/` solves both constraints:
 The bridge can return only:
 
 - current schedule date and week label;
-- CSS and ATS group time and topic;
+- CSS and ATS group time, topic, and facilitator;
 - Monday–Sunday breakfast, lunch, dinner, and snack text.
 
 It does not read or return patient names, Kipu data, staffing assignments,
 recovery-specialist posts, management lists, notes, formulas, comments, or any
 schedule cells outside the current day’s fixed allowlist.
 
-Facilitator cells are intentionally excluded. The internal schedule currently
-contains at least one peer-led entry with a first name, so those cells cannot be
-assumed to contain staff names. Facilitators should not be published until a
-separate verified public-staff allowlist exists.
+Facilitator cells are included. Hillside confirmed that names in parenthetical
+peer-led entries identify the staff member supervising the group.
 
 The public JSON endpoint is intentionally accessible to the website. The two
 Google Sheets remain private; only the sanitized JSON result is public.
@@ -85,8 +83,8 @@ The bridge reads these ranges and no others:
 
 | Workbook | Tab | Cells | Use |
 | --- | --- | --- | --- |
-| Group Schedules and RS Posts | current weekly tab | CSS time cells `A3`, `A5`, `A7`, `A9`, `A11` plus the matching current-day topic cells in `B`, `D`, `F`, `H`, `J`, `L`, or `N` | CSS schedule |
-| Group Schedules and RS Posts | current weekly tab | ATS time cells `Q3`, `Q5`, `Q7`, `Q9` plus the matching current-day topic cells in `R`, `T`, `V`, `X`, `Z`, `AB`, or `AD` | ATS schedule |
+| Group Schedules and RS Posts | current weekly tab | CSS time cells `A3`, `A5`, `A7`, `A9`, `A11` plus the matching current-day topic and following facilitator cells in `B`, `D`, `F`, `H`, `J`, `L`, or `N` | CSS schedule |
+| Group Schedules and RS Posts | current weekly tab | ATS time cells `Q3`, `Q5`, `Q7`, `Q9` plus the matching current-day topic and following facilitator cells in `R`, `T`, `V`, `X`, `Z`, `AB`, or `AD` | ATS schedule |
 | Hillside Website Menu | `Menu` | `A3:F9` | Meal descriptions |
 
 For menu rows, the bridge constructs the public day and date itself. It returns

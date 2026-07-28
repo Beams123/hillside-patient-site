@@ -52,12 +52,14 @@ function parseScheduleGroup(value: unknown): ScheduleGroup | null {
   const time = readString(value.time, 20);
   const timeValue = readString(value.timeValue, 5);
   const topic = readString(value.topic, 140);
+  const facilitator = readString(value.facilitator, 100, true);
 
   if (
     time === null ||
     timeValue === null ||
     !timeValuePattern.test(timeValue) ||
-    topic === null
+    topic === null ||
+    facilitator === null
   ) {
     return null;
   }
@@ -66,6 +68,7 @@ function parseScheduleGroup(value: unknown): ScheduleGroup | null {
     time,
     timeValue,
     topic,
+    facilitator,
   };
 }
 

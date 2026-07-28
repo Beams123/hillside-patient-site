@@ -42,10 +42,10 @@ Before public deployment:
 
 - Keep both Google Sheets private.
 - Verify the Apps Script `/exec` response in a private browser window.
-- Confirm it contains only schedule date/week, CSS and ATS times/topics, and
-  weekly meal descriptions.
-- Keep facilitator cells excluded until a separate verified public-staff
-  allowlist is designed.
+- Confirm it contains only schedule date/week, CSS and ATS
+  times/topics/facilitators, and weekly meal descriptions.
+- Reassess the facilitator field if the schedule workbook ever begins using
+  those cells for anyone other than staff members supervising groups.
 - Configure `HILLSIDE_DATA_FEED_URL` as a server-only environment variable.
 - Do not add forms, analytics, authentication, or other data collection until
   their privacy, retention, access-control, and incident-response architecture

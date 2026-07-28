@@ -16,6 +16,7 @@ export type ScheduleGroup = {
   time: string;
   timeValue: string;
   topic: string;
+  facilitator: string;
 };
 
 export type ProgramSchedule = {

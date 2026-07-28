@@ -46,7 +46,14 @@ export function ScheduleCard({ schedule, isAvailable }: ScheduleCardProps) {
                 <Clock3 className="size-4" aria-hidden="true" />
                 {group.time}
               </time>
-              <p className="font-medium text-brand-cream">{group.topic}</p>
+              <div>
+                <p className="font-medium text-brand-cream">{group.topic}</p>
+                {group.facilitator ? (
+                  <p className="mt-1 text-sm text-brand-muted">
+                    Facilitator: {group.facilitator}
+                  </p>
+                ) : null}
+              </div>
             </li>
           ))}
         </ol>

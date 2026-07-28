@@ -142,6 +142,7 @@ function readProgramSchedule_(sheet, config, dayIndex) {
   config.timeRows.forEach(function (row) {
     cellReferences.push(config.timeColumn + row);
     cellReferences.push(contentColumn + row);
+    cellReferences.push(contentColumn + (row + 1));
   });
 
   const values = sheet
@@ -152,14 +153,16 @@ function readProgramSchedule_(sheet, config, dayIndex) {
     });
 
   return config.timeRows.reduce(function (groups, timeRow, index) {
-    const time = parseTime_(values[index * 2]);
-    const topic = sanitizePublicText_(values[index * 2 + 1], 140);
+    const time = parseTime_(values[index * 3]);
+    const topic = sanitizePublicText_(values[index * 3 + 1], 140);
+    const facilitator = sanitizePublicText_(values[index * 3 + 2], 100);
 
     if (time && topic) {
       groups.push({
         time: time.display,
         timeValue: time.value,
         topic: topic,
+        facilitator: facilitator,
       });
     }
 
