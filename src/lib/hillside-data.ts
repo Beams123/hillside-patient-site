@@ -17,7 +17,9 @@ const maximumResponseCharacters = 100_000;
 const maximumGroupsPerProgram = 12;
 
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
-const timeValuePattern = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+const displayTimePattern = /^(\d{1,2}):([0-5]\d) (AM|PM)$/;
+const coverageFacilitatorPattern =
+  /^[A-Za-z][A-Za-z .'-]{0,80}\s*\([^)]*\bcovering\b[^)]*\)$/i;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -44,31 +46,71 @@ function readString(
   return normalized;
 }
 
+function getTimeValue(displayTime: string): string | null {
+  const match = displayTime.match(displayTimePattern);
+
+  if (!match) {
+    return null;
+  }
+
+  let hour = Number(match[1]);
+  const minute = match[2];
+  const period = match[3];
+
+  if (hour < 1 || hour > 12) {
+    return null;
+  }
+
+  if (period === "AM" && hour === 12) {
+    hour = 0;
+  } else if (period === "PM" && hour !== 12) {
+    hour += 12;
+  }
+
+  return `${String(hour).padStart(2, "0")}:${minute}`;
+}
+
+function normalizeScheduleContent(topic: string, facilitator: string) {
+  if (
+    facilitator &&
+    coverageFacilitatorPattern.test(topic) &&
+    !coverageFacilitatorPattern.test(facilitator)
+  ) {
+    return {
+      topic: facilitator,
+      facilitator: topic,
+    };
+  }
+
+  return { topic, facilitator };
+}
+
 function parseScheduleGroup(value: unknown): ScheduleGroup | null {
   if (!isRecord(value)) {
     return null;
   }
 
   const time = readString(value.time, 20);
-  const timeValue = readString(value.timeValue, 5);
   const topic = readString(value.topic, 140);
   const facilitator = readString(value.facilitator, 100, true);
+  const timeValue = time === null ? null : getTimeValue(time);
 
   if (
     time === null ||
     timeValue === null ||
-    !timeValuePattern.test(timeValue) ||
     topic === null ||
     facilitator === null
   ) {
     return null;
   }
 
+  const content = normalizeScheduleContent(topic, facilitator);
+
   return {
     time,
     timeValue,
-    topic,
-    facilitator,
+    topic: content.topic,
+    facilitator: content.facilitator,
   };
 }
 

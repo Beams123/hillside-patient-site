@@ -146,20 +146,42 @@ function readProgramSchedule_(sheetName, config, dayIndex) {
 
   return config.timeRows.reduce(function (groups, timeRow, index) {
     const time = parseTime_(values[index * 3]);
-    const topic = sanitizePublicText_(values[index * 3 + 1], 140);
-    const facilitator = sanitizePublicText_(values[index * 3 + 2], 100);
+    const content = normalizeScheduleContent_(
+      sanitizePublicText_(values[index * 3 + 1], 140),
+      sanitizePublicText_(values[index * 3 + 2], 100),
+    );
 
-    if (time && topic) {
+    if (time && content.topic) {
       groups.push({
         time: time.display,
-        timeValue: time.value,
-        topic: topic,
-        facilitator: facilitator,
+        topic: content.topic,
+        facilitator: content.facilitator,
       });
     }
 
     return groups;
   }, []);
+}
+
+function normalizeScheduleContent_(topic, facilitator) {
+  const coverageFacilitatorPattern =
+    /^[A-Za-z][A-Za-z .'-]{0,80}\s*\([^)]*\bcovering\b[^)]*\)$/i;
+
+  if (
+    facilitator &&
+    coverageFacilitatorPattern.test(topic) &&
+    !coverageFacilitatorPattern.test(facilitator)
+  ) {
+    return {
+      topic: facilitator,
+      facilitator: topic,
+    };
+  }
+
+  return {
+    topic: topic,
+    facilitator: facilitator,
+  };
 }
 
 function readMenu_(week) {
@@ -247,7 +269,6 @@ function parseTime_(value) {
 
   return {
     display: displayHour + ":" + paddedMinute + " " + displayPeriod,
-    value: String(hour).padStart(2, "0") + ":" + paddedMinute,
   };
 }
 
