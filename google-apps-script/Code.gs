@@ -11,7 +11,7 @@ const MENU_SPREADSHEET_ID =
   "1qUxUFHaCBmZP5ygjMNX49Q1Kxjbx2QjU3MUQj5KSQdA";
 const FACILITY_TIME_ZONE = "America/New_York";
 const CACHE_SECONDS = 300;
-const PUBLIC_PAYLOAD_VERSION = 2;
+const PUBLIC_PAYLOAD_VERSION = 3;
 const MENU_ITEMS_RANGE = "D4:K31";
 const MENU_ITEMS_PER_MEAL = 8;
 const MEALS_PER_DAY = 4;
@@ -71,14 +71,14 @@ function authorizeBridge() {
 
 function getCachedPayload_() {
   const cache = CacheService.getScriptCache();
-  const cached = cache.get("public-payload-v2");
+  const cached = cache.get("public-payload-v3");
 
   if (cached) {
     return JSON.parse(cached);
   }
 
   const payload = buildPayload_();
-  cache.put("public-payload-v2", JSON.stringify(payload), CACHE_SECONDS);
+  cache.put("public-payload-v3", JSON.stringify(payload), CACHE_SECONDS);
   return payload;
 }
 
@@ -89,17 +89,15 @@ function buildPayload_() {
     FACILITY_TIME_ZONE,
     "yyyy-MM-dd",
   );
-  const dayIndex =
-    Number(Utilities.formatDate(now, FACILITY_TIME_ZONE, "u")) - 1;
   const week = getWeekDetails_(now);
 
   const schedules = {};
 
   PROGRAM_CONFIGS.forEach(function (config) {
-    schedules[config.code] = readProgramSchedule_(
+    schedules[config.code] = readWeeklyProgramSchedule_(
       week.label,
       config,
-      dayIndex,
+      week,
     );
   });
 
@@ -129,15 +127,19 @@ function getWeekDetails_(date) {
   };
 }
 
-function readProgramSchedule_(sheetName, config, dayIndex) {
-  const contentColumn = config.contentColumns[dayIndex];
+function readWeeklyProgramSchedule_(sheetName, config, week) {
   const cellReferences = [];
   const sheetReference = quoteSheetName_(sheetName) + "!";
 
   config.timeRows.forEach(function (row) {
     cellReferences.push(sheetReference + config.timeColumn + row);
-    cellReferences.push(sheetReference + contentColumn + row);
-    cellReferences.push(sheetReference + contentColumn + (row + 1));
+  });
+
+  config.contentColumns.forEach(function (contentColumn) {
+    config.timeRows.forEach(function (row) {
+      cellReferences.push(sheetReference + contentColumn + row);
+      cellReferences.push(sheetReference + contentColumn + (row + 1));
+    });
   });
 
   const values = getFormattedRanges_(
@@ -147,23 +149,44 @@ function readProgramSchedule_(sheetName, config, dayIndex) {
     return getFirstCellValue_(valueRange);
   });
 
-  return config.timeRows.reduce(function (groups, timeRow, index) {
-    const time = parseTime_(values[index * 3]);
-    const content = normalizeScheduleContent_(
-      sanitizePublicText_(values[index * 3 + 1], 140),
-      sanitizePublicText_(values[index * 3 + 2], 100),
+  const times = values.slice(0, config.timeRows.length).map(function (value) {
+    return parseTime_(value);
+  });
+  let contentIndex = config.timeRows.length;
+
+  return DAY_NAMES.map(function (day, dayIndex) {
+    const groups = config.timeRows.reduce(function (
+      dayGroups,
+      timeRow,
+      timeIndex,
+    ) {
+      const content = normalizeScheduleContent_(
+        sanitizePublicText_(values[contentIndex], 140),
+        sanitizePublicText_(values[contentIndex + 1], 100),
+      );
+      const time = times[timeIndex];
+      contentIndex += 2;
+
+      if (time && content.topic) {
+        dayGroups.push({
+          time: time.display,
+          topic: content.topic,
+          facilitator: content.facilitator,
+        });
+      }
+
+      return dayGroups;
+    }, []);
+    const date = new Date(
+      week.monday.getTime() + dayIndex * 24 * 60 * 60 * 1000,
     );
 
-    if (time && content.topic) {
-      groups.push({
-        time: time.display,
-        topic: content.topic,
-        facilitator: content.facilitator,
-      });
-    }
-
-    return groups;
-  }, []);
+    return {
+      day: day,
+      date: Utilities.formatDate(date, FACILITY_TIME_ZONE, "yyyy-MM-dd"),
+      groups: groups,
+    };
+  });
 }
 
 function normalizeScheduleContent_(topic, facilitator) {

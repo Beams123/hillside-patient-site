@@ -2,21 +2,15 @@ import { ArrowDown } from "lucide-react";
 
 import { CurrentDate } from "@/components/current-date";
 import { ResourceCard } from "@/components/resource-card";
-import { ScheduleCard } from "@/components/schedule-card";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { WeeklySchedule } from "@/components/weekly-schedule";
 import { homepageContent, resourcePreviews } from "@/data/homepage";
-import {
-  getEmptyProgramSchedules,
-  getHillsidePublicData,
-} from "@/lib/hillside-data";
+import { getHillsidePublicData } from "@/lib/hillside-data";
 
 export default async function Home() {
   const dataResult = await getHillsidePublicData();
   const isScheduleAvailable = dataResult.status === "available";
-  const programSchedules = isScheduleAvailable
-    ? dataResult.data.schedules
-    : getEmptyProgramSchedules();
 
   return (
     <div id="top" className="min-h-screen overflow-x-clip bg-background">
@@ -65,7 +59,7 @@ export default async function Home() {
                 href="#schedule"
                 className="mt-9 inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-brand-gold px-5 py-3 text-sm font-semibold text-brand-ink shadow-[0_10px_35px_rgba(210,176,103,0.12)] transition-colors hover:bg-brand-gold-light"
               >
-                View today&apos;s schedule
+                View this week&apos;s schedule
                 <ArrowDown className="size-4" aria-hidden="true" />
               </a>
             </div>
@@ -118,30 +112,43 @@ export default async function Home() {
             <div className="grid gap-8 lg:grid-cols-[minmax(0,0.75fr)_minmax(20rem,0.4fr)] lg:items-end">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-gold">
-                  Daily groups
+                  Group schedule
                 </p>
                 <h2
                   id="schedule-heading"
                   className="mt-4 text-balance text-4xl font-semibold tracking-[-0.04em] text-brand-cream sm:text-5xl"
                 >
-                  Today&apos;s program schedule
+                  Weekly program schedule
                 </h2>
               </div>
               <p className="max-w-xl text-sm leading-6 text-brand-muted lg:justify-self-end">
                 {isScheduleAvailable
-                  ? `Showing the CSS and ATS group information approved for ${dataResult.data.scheduleDate}.`
+                  ? `Showing the approved ATS and CSS group information for ${dataResult.data.weekLabel}. Choose a program, then open any day.`
                   : "The secure schedule connection is not active yet. No internal workbook content or placeholder group details are being shown."}
               </p>
             </div>
 
-            <div className="mt-10 grid items-start gap-5 lg:grid-cols-2">
-              {programSchedules.map((schedule) => (
-                <ScheduleCard
-                  key={schedule.id}
-                  schedule={schedule}
-                  isAvailable={isScheduleAvailable}
+            <div className="mt-10">
+              {isScheduleAvailable ? (
+                <WeeklySchedule
+                  schedules={dataResult.data.schedules}
+                  currentDate={dataResult.data.scheduleDate}
                 />
-              ))}
+              ) : (
+                <div className="rounded-2xl border border-white/[0.09] bg-brand-panel px-6 py-10 sm:px-10 sm:py-12">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-gold">
+                    Schedule connection
+                  </p>
+                  <h3 className="mt-3 text-3xl font-semibold tracking-tight text-brand-cream">
+                    The weekly schedule is not available yet
+                  </h3>
+                  <p className="mt-4 max-w-2xl leading-7 text-brand-muted">
+                    The read-only public schedule feed still needs its one-time
+                    connection. No internal workbook details or placeholder
+                    groups are being shown.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </section>

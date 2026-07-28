@@ -18,12 +18,12 @@ The bridge in `google-apps-script/` solves both constraints:
 The bridge can return only:
 
 - current schedule date and week label;
-- CSS and ATS group time, topic, and facilitator;
+- Monday–Sunday CSS and ATS group time, topic, and facilitator;
 - Monday–Sunday breakfast, lunch, dinner, and soup-of-the-day item lists.
 
 It does not read or return patient names, Kipu data, staffing assignments,
 recovery-specialist posts, management lists, notes, formulas, comments, or any
-schedule cells outside the current day’s fixed allowlist.
+schedule cells outside the current week’s fixed allowlist.
 
 Facilitator cells are included. Hillside confirmed that names in parenthetical
 peer-led entries identify the staff member supervising the group.
@@ -98,8 +98,8 @@ The bridge reads these ranges and no others:
 
 | Workbook | Tab | Cells | Use |
 | --- | --- | --- | --- |
-| Group Schedules and RS Posts | current weekly tab | CSS time cells `A3`, `A5`, `A7`, `A9`, `A11` plus the matching current-day topic and following facilitator cells in `B`, `D`, `F`, `H`, `J`, `L`, or `N` | CSS schedule |
-| Group Schedules and RS Posts | current weekly tab | ATS time cells `Q3`, `Q5`, `Q7`, `Q9` plus the matching current-day topic and following facilitator cells in `R`, `T`, `V`, `X`, `Z`, `AB`, or `AD` | ATS schedule |
+| Group Schedules and RS Posts | current weekly tab | CSS time cells `A3`, `A5`, `A7`, `A9`, `A11` plus the matching Monday–Sunday topic and following facilitator cells in `B`, `D`, `F`, `H`, `J`, `L`, and `N` | Weekly CSS schedule |
+| Group Schedules and RS Posts | current weekly tab | ATS time cells `Q3`, `Q5`, `Q7`, `Q9` plus the matching Monday–Sunday topic and following facilitator cells in `R`, `T`, `V`, `X`, `Z`, `AB`, and `AD` | Weekly ATS schedule |
 | Hillside Website Menu | `Menu Items` | `D4:K31` | Breakfast, lunch, dinner, and soup-of-the-day items |
 
 For menu rows, the bridge constructs the public day, date, and meal assignment

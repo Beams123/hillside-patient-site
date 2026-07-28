@@ -7,9 +7,10 @@ import {
   type HillsidePublicData,
   type MenuDay,
   type ProgramCode,
-  type ProgramSchedule,
+  type ScheduleDay,
   type ScheduleGroup,
   type WeekDay,
+  type WeeklyProgramSchedule,
 } from "@/types/hillside-data";
 
 const feedRevalidationSeconds = 300;
@@ -115,10 +116,7 @@ function parseScheduleGroup(value: unknown): ScheduleGroup | null {
   };
 }
 
-function parseProgramSchedule(
-  code: ProgramCode,
-  value: unknown,
-): ProgramSchedule | null {
+function parseScheduleGroups(value: unknown): ScheduleGroup[] | null {
   if (!Array.isArray(value) || value.length > maximumGroupsPerProgram) {
     return null;
   }
@@ -133,11 +131,109 @@ function parseProgramSchedule(
     return null;
   }
 
+  return groups;
+}
+
+function getWeekDates(scheduleDate: string) {
+  const anchorDate = new Date(`${scheduleDate}T12:00:00Z`);
+
+  if (Number.isNaN(anchorDate.getTime())) {
+    return [];
+  }
+
+  const daysSinceMonday = (anchorDate.getUTCDay() + 6) % 7;
+  const monday = new Date(anchorDate);
+  monday.setUTCDate(anchorDate.getUTCDate() - daysSinceMonday);
+
+  return weekDays.map((day, index) => {
+    const date = new Date(monday);
+    date.setUTCDate(monday.getUTCDate() + index);
+
+    return {
+      day,
+      date: date.toISOString().slice(0, 10),
+    };
+  });
+}
+
+function parseScheduleDay(value: unknown): ScheduleDay | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const day = readString(value.day, 9);
+  const date = readString(value.date, 10);
+  const groups = parseScheduleGroups(value.groups);
+
+  if (
+    day === null ||
+    !weekDays.includes(day as WeekDay) ||
+    date === null ||
+    !datePattern.test(date) ||
+    groups === null
+  ) {
+    return null;
+  }
+
+  return {
+    day: day as WeekDay,
+    date,
+    groups,
+  };
+}
+
+function parseWeeklyProgramSchedule(
+  code: ProgramCode,
+  value: unknown,
+  scheduleDate: string,
+): WeeklyProgramSchedule | null {
+  if (!Array.isArray(value) || value.length !== weekDays.length) {
+    return null;
+  }
+
+  const days = value.map(parseScheduleDay);
+  const expectedWeek = getWeekDates(scheduleDate);
+
+  if (
+    expectedWeek.length !== weekDays.length ||
+    days.some((day) => day === null) ||
+    days.some(
+      (day, index) =>
+        day?.day !== expectedWeek[index].day ||
+        day.date !== expectedWeek[index].date,
+    )
+  ) {
+    return null;
+  }
+
   return {
     id: code.toLowerCase() as Lowercase<ProgramCode>,
     label: "Program schedule",
     title: code,
-    groups,
+    days: days as ScheduleDay[],
+  };
+}
+
+function parseLegacyProgramSchedule(
+  code: ProgramCode,
+  value: unknown,
+  scheduleDate: string,
+): WeeklyProgramSchedule | null {
+  const groups = parseScheduleGroups(value);
+  const week = getWeekDates(scheduleDate);
+
+  if (groups === null || week.length !== weekDays.length) {
+    return null;
+  }
+
+  return {
+    id: code.toLowerCase() as Lowercase<ProgramCode>,
+    label: "Program schedule",
+    title: code,
+    days: week.map((day) => ({
+      ...day,
+      groups: day.date === scheduleDate ? groups : [],
+    })),
   };
 }
 
@@ -211,12 +307,13 @@ function parsePublicData(value: unknown): HillsidePublicData | null {
   if (
     !isRecord(value) ||
     value.ok !== true ||
-    (value.version !== 1 && value.version !== 2)
+    (value.version !== 1 && value.version !== 2 && value.version !== 3)
   ) {
     return null;
   }
 
-  const legacyVersion = value.version === 1;
+  const feedVersion = value.version;
+  const legacyMenuVersion = feedVersion === 1;
   const generatedAt = readString(value.generatedAt, 40);
   const scheduleDate = readString(value.scheduleDate, 10);
   const weekLabel = readString(value.weekLabel, 40);
@@ -237,9 +334,21 @@ function parsePublicData(value: unknown): HillsidePublicData | null {
   }
 
   const schedules = programCodes.map((code) =>
-    parseProgramSchedule(code, schedulesValue[code]),
+    feedVersion === 3
+      ? parseWeeklyProgramSchedule(
+          code,
+          schedulesValue[code],
+          scheduleDate,
+        )
+      : parseLegacyProgramSchedule(
+          code,
+          schedulesValue[code],
+          scheduleDate,
+        ),
   );
-  const menu = menuValue.map((day) => parseMenuDay(day, legacyVersion));
+  const menu = menuValue.map((day) =>
+    parseMenuDay(day, legacyMenuVersion),
+  );
 
   if (
     schedules.some((schedule) => schedule === null) ||
@@ -253,7 +362,7 @@ function parsePublicData(value: unknown): HillsidePublicData | null {
     generatedAt,
     scheduleDate,
     weekLabel,
-    schedules: schedules as ProgramSchedule[],
+    schedules: schedules as WeeklyProgramSchedule[],
     menu: menu as MenuDay[],
   };
 }
@@ -320,13 +429,4 @@ export async function getHillsidePublicData(): Promise<HillsideDataResult> {
   } catch {
     return { status: "unavailable", data: null };
   }
-}
-
-export function getEmptyProgramSchedules(): ProgramSchedule[] {
-  return programCodes.map((code) => ({
-    id: code.toLowerCase() as Lowercase<ProgramCode>,
-    label: "Program schedule",
-    title: code,
-    groups: [],
-  }));
 }

@@ -27,7 +27,7 @@ export const homepageContent = {
   introduction:
     "A simple, welcoming place to see the day ahead and find useful facility information.",
   quickLook: [
-    "Review today’s CSS or ATS group schedule.",
+    "Review the full week’s ATS or CSS group schedule.",
     "Check the weekly menu and available patient resources.",
     "Ask a staff member whenever you need help finding information.",
   ],

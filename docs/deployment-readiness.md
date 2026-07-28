@@ -42,7 +42,7 @@ Before public deployment:
 
 - Keep both Google Sheets private.
 - Verify the Apps Script `/exec` response in a private browser window.
-- Confirm it contains only schedule date/week, CSS and ATS
+- Confirm it contains only schedule date/week, Monday–Sunday CSS and ATS
   times/topics/facilitators, and weekly meal-item lists.
 - Reassess the facilitator field if the schedule workbook ever begins using
   those cells for anyone other than staff members supervising groups.

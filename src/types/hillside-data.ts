@@ -19,11 +19,17 @@ export type ScheduleGroup = {
   facilitator: string;
 };
 
-export type ProgramSchedule = {
+export type ScheduleDay = {
+  day: WeekDay;
+  date: string;
+  groups: ScheduleGroup[];
+};
+
+export type WeeklyProgramSchedule = {
   id: Lowercase<ProgramCode>;
   label: "Program schedule";
   title: ProgramCode;
-  groups: ScheduleGroup[];
+  days: ScheduleDay[];
 };
 
 export type MenuDay = {
@@ -39,7 +45,7 @@ export type HillsidePublicData = {
   generatedAt: string;
   scheduleDate: string;
   weekLabel: string;
-  schedules: ProgramSchedule[];
+  schedules: WeeklyProgramSchedule[];
   menu: MenuDay[];
 };
 
