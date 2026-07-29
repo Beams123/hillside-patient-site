@@ -85,14 +85,14 @@ export default function RequestsPage() {
                       {patientRequestMode === "live"
                         ? "Private submission is active"
                         : patientRequestMode === "test"
-                          ? "Synthetic testing is active"
+                          ? "Demonstration mode is active"
                           : "Online submission is not active yet"}
                     </h2>
                     <p className="mt-2 text-sm leading-6 text-brand-muted">
                       {patientRequestMode === "live"
                         ? "Grievances, package requests, and visitor requests are validated before being recorded in their restricted management workbooks."
                         : patientRequestMode === "test"
-                          ? "Development submissions reach the local validation route but are not sent to Google Sheets or retained."
+                          ? "Synthetic submissions reach the website validation route but are not sent to Google Sheets or retained."
                           : "Continue using the current paper process until the private workbooks, reviewer access, and retention policies are configured."}
                     </p>
                   </div>

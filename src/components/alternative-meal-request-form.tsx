@@ -304,7 +304,7 @@ export function AlternativeMealRequestForm({
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-gold">
             {mode === "test"
-              ? "Local functional prototype"
+              ? "Demonstration mode"
               : "Private meal workflow"}
           </p>
           <h2 className="mt-3 text-3xl font-semibold tracking-tight text-brand-cream">
@@ -321,7 +321,7 @@ export function AlternativeMealRequestForm({
           {mode === "live"
             ? "Private order sheet"
             : mode === "test"
-              ? "Development only"
+              ? "No data saved"
               : "Not active"}
         </span>
       </div>

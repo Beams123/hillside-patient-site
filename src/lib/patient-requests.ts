@@ -448,6 +448,10 @@ function hasLiveConfiguration(): boolean {
 }
 
 export function getPatientRequestMode(): PatientRequestMode {
+  if (process.env.HILLSIDE_DEMO_MODE === "true") {
+    return "test";
+  }
+
   if (
     process.env.NODE_ENV === "development" &&
     process.env.HILLSIDE_PATIENT_REQUESTS_LOCAL_LIVE_TEST !== "true"

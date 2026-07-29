@@ -52,7 +52,7 @@ export function PatientRequestFormFrame({
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-gold">
             {mode === "test"
-              ? "Local functional test"
+              ? "Demonstration mode"
               : "Private Hillside workflow"}
           </p>
           <h2
@@ -70,7 +70,7 @@ export function PatientRequestFormFrame({
           {mode === "live"
             ? "Private submission"
             : mode === "test"
-              ? "Development only"
+              ? "No data saved"
               : "Not active"}
         </span>
       </div>
@@ -85,8 +85,8 @@ export function PatientRequestFormFrame({
             <strong className="font-semibold text-brand-cream">
               Use synthetic information only.
             </strong>{" "}
-            The form reaches the local validation route, but test submissions
-            are not forwarded to Google Sheets or retained.
+            The form reaches the website&apos;s validation route, but test
+            submissions are not forwarded to Google Sheets or retained.
           </p>
         </div>
       ) : null}

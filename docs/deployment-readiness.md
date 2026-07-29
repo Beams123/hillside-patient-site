@@ -2,6 +2,20 @@
 
 The site is not cleared for public deployment yet.
 
+## Temporary no-PHI management preview
+
+For an internal management demonstration only, a server host may set
+`HILLSIDE_DEMO_MODE=true`. In this mode, grievance, package, visitor, and
+alternative-meal forms run their normal website validation and return
+synthetic receipts, but never forward or retain submissions.
+
+- Use synthetic names and scenarios only.
+- Do not configure private request URLs or shared secrets.
+- Keep the preview access-limited.
+- Set only the sanitized public `HILLSIDE_DATA_FEED_URL` if approved schedule,
+  menu, activity, and staff content should appear.
+- Remove `HILLSIDE_DEMO_MODE` before any patient-facing release.
+
 ## Dependency blocker
 
 As of July 29, 2026, the installed Next.js 16.2.12 dependencies include:

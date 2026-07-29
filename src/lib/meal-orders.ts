@@ -166,6 +166,10 @@ function hasLiveConfiguration(): boolean {
 }
 
 export function getMealOrderMode(): MealOrderMode {
+  if (process.env.HILLSIDE_DEMO_MODE === "true") {
+    return "test";
+  }
+
   if (
     process.env.NODE_ENV === "development" &&
     process.env.HILLSIDE_MEAL_ORDER_LOCAL_LIVE_TEST !== "true"

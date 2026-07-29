@@ -189,7 +189,7 @@ export default async function MenuPage() {
                 {mealOrderMode === "live"
                   ? " The selected meal and submission time are verified by the server before the request reaches the private order sheet."
                   : mealOrderMode === "test"
-                    ? " Local development is using synthetic receipts and is not connected to the private order sheet."
+                    ? " Demonstration mode uses synthetic receipts and is not connected to the private order sheet."
                     : " Online submission remains disabled until the private order destination and server-only connection are fully configured."}
               </p>
               <div className="mt-6 flex items-center gap-2 border-t border-white/[0.08] pt-5 text-xs font-semibold uppercase tracking-[0.14em] text-brand-muted">
@@ -197,7 +197,7 @@ export default async function MenuPage() {
                 {mealOrderMode === "live"
                   ? "Private workflow active"
                   : mealOrderMode === "test"
-                    ? "Safe local test mode"
+                    ? "Safe demonstration mode"
                     : "Paper process remains active"}
               </div>
             </aside>
