@@ -18,6 +18,7 @@ export const navigationItems = [
   { label: "Schedule", href: "/#schedule" },
   { label: "Menu", href: "/menu" },
   { label: "Staff", href: "/staff" },
+  { label: "Requests", href: "/requests" },
   { label: "Resources", href: "/resources" },
 ] as const;
 
@@ -51,8 +52,9 @@ export const resourcePreviews: ResourcePreview[] = [
     id: "request-forms",
     title: "Request forms",
     description:
-      "Find common facility requests in one place after privacy review.",
-    status: "Planned",
+      "Preview draft request categories before a secure workflow is approved.",
+    status: "Preview",
+    href: "/requests",
     icon: "forms",
   },
   {

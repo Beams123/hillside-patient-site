@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  ClipboardPenLine,
+  ShieldCheck,
+  UtensilsCrossed,
+} from "lucide-react";
 
 import { MenuDayCard } from "@/components/menu-day-card";
 import { SiteFooter } from "@/components/site-footer";
@@ -117,6 +122,68 @@ export default async function MenuPage() {
                 </p>
               </div>
             )}
+          </div>
+        </section>
+
+        <section
+          id="alternative-meal-request"
+          aria-labelledby="alternative-meal-heading"
+          className="scroll-mt-28 border-t border-white/[0.07]"
+        >
+          <div className="mx-auto grid w-full max-w-7xl gap-8 px-5 py-16 sm:px-8 sm:py-20 lg:grid-cols-[minmax(0,0.75fr)_minmax(20rem,0.45fr)] lg:items-center lg:px-12 lg:py-24">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-gold">
+                Alternative menu
+              </p>
+              <h2
+                id="alternative-meal-heading"
+                className="mt-3 text-balance text-3xl font-semibold tracking-[-0.035em] text-brand-cream sm:text-4xl"
+              >
+                Request an alternative meal
+              </h2>
+              <p className="mt-4 max-w-2xl leading-7 text-brand-muted">
+                Patients currently request a meal from the alternative menu by
+                writing the request on the paper request sheet.
+              </p>
+              <Link
+                href="/requests"
+                className="mt-7 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-gold transition-colors hover:text-brand-gold-light"
+              >
+                <ArrowLeft className="size-4" aria-hidden="true" />
+                Return to the Request Hub
+              </Link>
+            </div>
+
+            <aside
+              aria-label="Alternative meal request instructions"
+              className="gold-glow-card rounded-2xl border border-brand-gold/25 bg-brand-panel p-6 sm:p-7"
+            >
+              <div className="flex items-start gap-4">
+                <span className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-brand-gold/20 bg-brand-gold/[0.07] text-brand-gold">
+                  <UtensilsCrossed
+                    className="size-5"
+                    strokeWidth={1.75}
+                    aria-hidden="true"
+                  />
+                </span>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-gold">
+                    Current process
+                  </p>
+                  <h3 className="mt-2 text-xl font-semibold tracking-tight text-brand-cream">
+                    Use the paper request sheet
+                  </h3>
+                </div>
+              </div>
+              <p className="mt-5 text-sm leading-6 text-brand-muted">
+                Online meal requests are not active. This page provides the
+                current guidance but does not collect or submit a meal choice.
+              </p>
+              <div className="mt-6 flex items-center gap-2 border-t border-white/[0.08] pt-5 text-xs font-semibold uppercase tracking-[0.14em] text-brand-muted">
+                <ClipboardPenLine className="size-4" aria-hidden="true" />
+                No online form connected
+              </div>
+            </aside>
           </div>
         </section>
       </main>

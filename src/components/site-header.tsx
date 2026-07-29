@@ -80,7 +80,7 @@ export function SiteHeader() {
         aria-label="Mobile navigation"
         className="border-t border-white/[0.06] md:hidden"
       >
-        <ul className="grid grid-cols-5">
+        <ul className="grid grid-cols-6">
           {navigationItems.map((item) => (
             <li key={item.href}>
               <Link
