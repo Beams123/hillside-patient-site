@@ -32,7 +32,7 @@ export default async function MasterSchedulePage() {
       <main id="main-content" tabIndex={-1}>
         <section
           aria-labelledby="master-schedule-heading"
-          className="relative isolate overflow-hidden bg-brand-surface"
+          className="ambient-hero-section relative isolate overflow-hidden bg-brand-surface"
         >
           <AmbientHillsideSign />
           <div className="mx-auto w-full max-w-7xl px-5 pb-20 pt-16 sm:px-8 sm:pb-24 sm:pt-20 lg:px-12 lg:pb-28 lg:pt-28">

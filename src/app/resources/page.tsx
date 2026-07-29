@@ -29,7 +29,7 @@ export default function ResourcesPage() {
       <main id="main-content" tabIndex={-1}>
         <section
           aria-labelledby="resources-page-heading"
-          className="relative isolate overflow-hidden"
+          className="ambient-hero-section relative isolate overflow-hidden"
         >
           <AmbientHillsideSign />
           <div className="mx-auto w-full max-w-7xl px-5 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
