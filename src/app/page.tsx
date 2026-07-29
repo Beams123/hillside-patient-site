@@ -32,7 +32,7 @@ export default async function Home() {
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_86%_14%,rgba(210,176,103,0.12),transparent_28%),radial-gradient(circle_at_12%_88%,rgba(210,176,103,0.07),transparent_34%)]"
           />
-          <div className="mx-auto grid min-h-[calc(100svh-6.75rem)] w-full max-w-7xl items-center gap-12 px-5 py-16 sm:px-8 sm:py-20 lg:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.55fr)] lg:px-12 lg:py-24">
+          <div className="mx-auto flex min-h-[32rem] w-full max-w-7xl items-center px-5 py-16 sm:min-h-[34rem] sm:px-8 sm:py-20 lg:min-h-[36rem] lg:px-12 lg:py-24">
             <div className="max-w-4xl">
               <div className="mb-8 flex flex-wrap items-center gap-x-4 gap-y-3">
                 <span className="h-px w-10 bg-brand-gold" aria-hidden="true" />
@@ -63,43 +63,6 @@ export default async function Home() {
                 <ArrowDown className="size-4" aria-hidden="true" />
               </a>
             </div>
-
-            <aside
-              aria-labelledby="quick-look-heading"
-              className="relative overflow-hidden rounded-2xl border border-brand-gold/20 bg-brand-panel/85 p-6 shadow-2xl shadow-black/30 sm:p-8"
-            >
-              <div
-                aria-hidden="true"
-                className="absolute left-0 top-0 h-1 w-24 bg-brand-gold"
-              />
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-gold">
-                At a glance
-              </p>
-              <h2
-                id="quick-look-heading"
-                className="mt-3 text-2xl font-semibold tracking-tight text-brand-cream"
-              >
-                A clear view of the day
-              </h2>
-              <ul className="mt-6 space-y-4">
-                {homepageContent.quickLook.map((item, index) => (
-                  <li
-                    key={item}
-                    className="flex gap-4 border-t border-white/[0.08] pt-4 first:border-t-0 first:pt-0"
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full border border-brand-gold/30 text-xs font-semibold text-brand-gold"
-                    >
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
-                    <span className="text-sm leading-6 text-brand-muted">
-                      {item}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </aside>
           </div>
         </section>
 

@@ -17,6 +17,7 @@ export const navigationItems = [
   { label: "Today", href: "/" },
   { label: "Schedule", href: "/#schedule" },
   { label: "Menu", href: "/menu" },
+  { label: "Staff", href: "/staff" },
   { label: "Resources", href: "/#resources" },
 ] as const;
 
@@ -26,11 +27,6 @@ export const homepageContent = {
   previewLabel: "Site preview",
   introduction:
     "A simple, welcoming place to see the day ahead and find useful facility information.",
-  quickLook: [
-    "Review the full week’s ATS or CSS group schedule.",
-    "Check the weekly menu and available patient resources.",
-    "Ask a staff member whenever you need help finding information.",
-  ],
 } as const;
 
 export const resourcePreviews: ResourcePreview[] = [
@@ -46,8 +42,9 @@ export const resourcePreviews: ResourcePreview[] = [
   {
     id: "staff-directory",
     title: "Staff directory",
-    description: "Find staff names, roles, and general contact guidance.",
-    status: "Planned",
+    description: "Find approved staff names, roles, and biographies.",
+    status: "Available",
+    href: "/staff",
     icon: "directory",
   },
   {

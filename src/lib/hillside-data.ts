@@ -9,6 +9,7 @@ import {
   type ProgramCode,
   type ScheduleDay,
   type ScheduleGroup,
+  type StaffMember,
   type WeekDay,
   type WeeklyProgramSchedule,
 } from "@/types/hillside-data";
@@ -17,9 +18,13 @@ const feedRevalidationSeconds = 300;
 const maximumResponseCharacters = 100_000;
 const maximumGroupsPerProgram = 12;
 const maximumMenuItemsPerMeal = 8;
+const maximumStaffMembers = 50;
+const maximumDepartmentsPerStaffMember = 2;
+const publicStaffDepartments = new Set(["Clinical", "Leadership"]);
 
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 const displayTimePattern = /^(\d{1,2}):([0-5]\d) (AM|PM)$/;
+const staffSlugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const coverageFacilitatorPattern =
   /^[A-Za-z][A-Za-z .'-]{0,80}\s*\([^)]*\bcovering\b[^)]*\)$/i;
 
@@ -303,11 +308,67 @@ function parseMenuDay(value: unknown, legacyVersion: boolean): MenuDay | null {
   };
 }
 
+function parseStaffMember(value: unknown): StaffMember | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const slug = readString(value.slug, 80);
+  const name = readString(value.name, 80);
+  const title = readString(value.title, 100);
+  const departments = Array.isArray(value.departments)
+    ? value.departments.map((department) => readString(department, 60))
+    : null;
+  const bio = readString(value.bio, 1_200, true);
+
+  if (
+    slug === null ||
+    !staffSlugPattern.test(slug) ||
+    name === null ||
+    title === null ||
+    departments === null ||
+    departments.length > maximumDepartmentsPerStaffMember ||
+    !departments.every(
+      (department): department is string => department !== null,
+    ) ||
+    !departments.every(
+      (department) =>
+        department !== null && publicStaffDepartments.has(department),
+    ) ||
+    new Set(departments.map((department) => department.toLocaleLowerCase()))
+      .size !== departments.length ||
+    bio === null
+  ) {
+    return null;
+  }
+
+  return { slug, name, title, departments, bio };
+}
+
+function parseStaff(value: unknown): StaffMember[] | null {
+  if (!Array.isArray(value) || value.length > maximumStaffMembers) {
+    return null;
+  }
+
+  const staff = value.map(parseStaffMember);
+
+  if (!staff.every((member): member is StaffMember => member !== null)) {
+    return null;
+  }
+
+  const slugs = new Set(staff.map((member) => member.slug));
+
+  return slugs.size === staff.length ? staff : null;
+}
+
 function parsePublicData(value: unknown): HillsidePublicData | null {
   if (
     !isRecord(value) ||
     value.ok !== true ||
-    (value.version !== 1 && value.version !== 2 && value.version !== 3)
+    (value.version !== 1 &&
+      value.version !== 2 &&
+      value.version !== 3 &&
+      value.version !== 4)
   ) {
     return null;
   }
@@ -319,6 +380,8 @@ function parsePublicData(value: unknown): HillsidePublicData | null {
   const weekLabel = readString(value.weekLabel, 40);
   const schedulesValue = value.schedules;
   const menuValue = value.menu;
+  const staff =
+    feedVersion === 4 ? parseStaff(value.staff) : [];
 
   if (
     generatedAt === null ||
@@ -328,13 +391,14 @@ function parsePublicData(value: unknown): HillsidePublicData | null {
     weekLabel === null ||
     !isRecord(schedulesValue) ||
     !Array.isArray(menuValue) ||
+    staff === null ||
     (menuValue.length !== 0 && menuValue.length !== weekDays.length)
   ) {
     return null;
   }
 
   const schedules = programCodes.map((code) =>
-    feedVersion === 3
+    feedVersion >= 3
       ? parseWeeklyProgramSchedule(
           code,
           schedulesValue[code],
@@ -364,6 +428,7 @@ function parsePublicData(value: unknown): HillsidePublicData | null {
     weekLabel,
     schedules: schedules as WeeklyProgramSchedule[],
     menu: menu as MenuDay[],
+    staff,
   };
 }
 

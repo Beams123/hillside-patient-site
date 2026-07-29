@@ -41,12 +41,21 @@ export type MenuDay = {
   soupOfTheDay: string[];
 };
 
+export type StaffMember = {
+  slug: string;
+  name: string;
+  title: string;
+  departments: string[];
+  bio: string;
+};
+
 export type HillsidePublicData = {
   generatedAt: string;
   scheduleDate: string;
   weekLabel: string;
   schedules: WeeklyProgramSchedule[];
   menu: MenuDay[];
+  staff: StaffMember[];
 };
 
 export type HillsideDataResult =

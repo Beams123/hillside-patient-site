@@ -27,8 +27,8 @@ Before public deployment:
 2. Run `npm audit --omit=dev` and confirm these findings are resolved without a
    forced downgrade or unsupported package override.
 3. Run `npm run lint` and `npm run build`.
-4. Re-test the schedule and menu bridge with unexpected extra JSON fields and
-   confirm the site renders only its approved data-transfer objects.
+4. Re-test the schedule, menu, and staff bridge with unexpected extra JSON
+   fields and confirm the site renders only its approved data-transfer objects.
 
 Primary advisories:
 
@@ -40,10 +40,15 @@ Primary advisories:
 
 Before public deployment:
 
-- Keep both Google Sheets private.
+- Keep the schedule, menu, and staff Google Sheets private.
 - Verify the Apps Script `/exec` response in a private browser window.
 - Confirm it contains only schedule date/week, Monday–Sunday CSS and ATS
-  times/topics/facilitators, and weekly meal-item lists.
+  times/topics/facilitators, weekly meal-item lists, and checked staff
+  slug/name/title/departments/bio fields.
+- Confirm unchecked staff rows and the `Publish` checkbox are absent from the
+  public response.
+- Review every published biography for patient information, confidential work,
+  personal contact details, and unapproved claims before checking `Publish`.
 - Reassess the facilitator field if the schedule workbook ever begins using
   those cells for anyone other than staff members supervising groups.
 - Configure `HILLSIDE_DATA_FEED_URL` as a server-only environment variable.

@@ -1,20 +1,27 @@
 /**
- * Hillside public schedule and menu bridge.
+ * Hillside public schedule, menu, and staff-directory bridge.
  *
  * This script is deliberately read-only. It reads only fixed schedule cells
- * and fixed menu cells, then creates a small allowlisted JSON response.
+ * and fixed public-content cells, then creates a small allowlisted JSON
+ * response.
  */
 
 const SOURCE_SCHEDULE_SPREADSHEET_ID =
   "16_vNk2TcNbZheXvCEuRpUHGzVNYQ_DC_Ku6Pg5YifFE";
 const MENU_SPREADSHEET_ID =
   "1qUxUFHaCBmZP5ygjMNX49Q1Kxjbx2QjU3MUQj5KSQdA";
+const STAFF_SPREADSHEET_ID =
+  "1CpGOnpZda9GMkGfs3iZnmxPMJ9hRR0xfD6hRk5fFi-g";
 const FACILITY_TIME_ZONE = "America/New_York";
 const CACHE_SECONDS = 300;
-const PUBLIC_PAYLOAD_VERSION = 3;
+const PUBLIC_PAYLOAD_VERSION = 4;
 const MENU_ITEMS_RANGE = "D4:K31";
 const MENU_ITEMS_PER_MEAL = 8;
 const MEALS_PER_DAY = 4;
+const STAFF_DIRECTORY_RANGE = "A4:F53";
+const MAXIMUM_STAFF_MEMBERS = 50;
+const MAXIMUM_DEPARTMENTS_PER_STAFF_MEMBER = 2;
+const PUBLIC_STAFF_DEPARTMENTS = ["Clinical"];
 
 const PROGRAM_CONFIGS = [
   {
@@ -66,19 +73,56 @@ function doGet() {
  * It returns the same sanitized payload as the public web endpoint.
  */
 function authorizeBridge() {
-  return buildPayload_();
+  const payload = buildPayload_();
+  const cssGroupCount = countWeeklyGroups_(payload.schedules.CSS);
+  const atsGroupCount = countWeeklyGroups_(payload.schedules.ATS);
+
+  console.log(
+    "Bridge verified: " +
+      payload.staff.length +
+      " published staff members, " +
+      cssGroupCount +
+      " CSS groups, and " +
+      atsGroupCount +
+      " ATS groups.",
+  );
+
+  return payload;
+}
+
+/**
+ * Run this from the Apps Script editor when staff entries do not appear.
+ * A permissions error here identifies access to the separate staff workbook
+ * without taking the schedule and menu feed offline.
+ */
+function verifyStaffDirectoryAccess() {
+  const staff = readStaff_();
+
+  console.log(
+    "Staff directory verified: " +
+      staff.length +
+      " published staff members.",
+  );
+
+  return staff;
+}
+
+function countWeeklyGroups_(schedule) {
+  return (schedule || []).reduce(function (total, day) {
+    return total + (day.groups || []).length;
+  }, 0);
 }
 
 function getCachedPayload_() {
   const cache = CacheService.getScriptCache();
-  const cached = cache.get("public-payload-v3");
+  const cached = cache.get("public-payload-v4");
 
   if (cached) {
     return JSON.parse(cached);
   }
 
   const payload = buildPayload_();
-  cache.put("public-payload-v3", JSON.stringify(payload), CACHE_SECONDS);
+  cache.put("public-payload-v4", JSON.stringify(payload), CACHE_SECONDS);
   return payload;
 }
 
@@ -109,6 +153,7 @@ function buildPayload_() {
     weekLabel: week.label,
     schedules: schedules,
     menu: readMenu_(week),
+    staff: readStaffSafely_(),
   };
 }
 
@@ -239,6 +284,84 @@ function sanitizeMenuItems_(row) {
   }).filter(function (item) {
     return item.length > 0;
   });
+}
+
+function readStaffSafely_() {
+  try {
+    return readStaff_();
+  } catch (error) {
+    console.error("Staff directory read failed", error);
+    return [];
+  }
+}
+
+function readStaff_() {
+  const staffValueRange = getFormattedRanges_(STAFF_SPREADSHEET_ID, [
+    quoteSheetName_("Staff Directory") + "!" + STAFF_DIRECTORY_RANGE,
+  ])[0];
+  const values = staffValueRange.values || [];
+  const publishedSlugs = {};
+
+  return values
+    .reduce(function (publishedStaff, row) {
+      if (publishedStaff.length >= MAXIMUM_STAFF_MEMBERS) {
+        return publishedStaff;
+      }
+
+      const isPublished =
+        sanitizePublicText_((row || [])[0], 5).toUpperCase() === "TRUE";
+      const name = sanitizePublicText_((row || [])[1], 80);
+      const title = sanitizePublicText_((row || [])[2], 100);
+      const department = sanitizePublicText_((row || [])[3], 60);
+      const isLeadership =
+        sanitizePublicText_((row || [])[4], 5).toUpperCase() === "TRUE";
+      const departments = sanitizeStaffDepartments_(
+        department,
+        isLeadership,
+      );
+      const bio = sanitizePublicText_((row || [])[5], 1200);
+      const slug = createStaffSlug_(name);
+
+      if (isPublished && name && title && slug && !publishedSlugs[slug]) {
+        publishedSlugs[slug] = true;
+        publishedStaff.push({
+          slug: slug,
+          name: name,
+          title: title,
+          departments: departments,
+          bio: bio,
+        });
+      }
+
+      return publishedStaff;
+    }, []);
+}
+
+function sanitizeStaffDepartments_(department, isLeadership) {
+  const approvedDepartment =
+    PUBLIC_STAFF_DEPARTMENTS.indexOf(department) >= 0 ? department : "";
+  const departments = approvedDepartment ? [approvedDepartment] : [];
+
+  if (
+    isLeadership &&
+    departments.length < MAXIMUM_DEPARTMENTS_PER_STAFF_MEMBER &&
+    approvedDepartment.toLowerCase() !== "leadership"
+  ) {
+    departments.push("Leadership");
+  }
+
+  return departments;
+}
+
+function createStaffSlug_(name) {
+  return name
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80)
+    .replace(/-+$/g, "");
 }
 
 function getFormattedRanges_(spreadsheetId, ranges) {
