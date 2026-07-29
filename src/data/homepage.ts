@@ -2,7 +2,7 @@ export type ResourcePreview = {
   id: string;
   title: string;
   description: string;
-  status: "Available" | "Planned";
+  status: "Available" | "Preview" | "Planned";
   href?: string;
   icon:
     | "menu"
@@ -18,7 +18,7 @@ export const navigationItems = [
   { label: "Schedule", href: "/#schedule" },
   { label: "Menu", href: "/menu" },
   { label: "Staff", href: "/staff" },
-  { label: "Resources", href: "/#resources" },
+  { label: "Resources", href: "/resources" },
 ] as const;
 
 export const homepageContent = {
@@ -71,9 +71,11 @@ export const resourcePreviews: ResourcePreview[] = [
   },
   {
     id: "patient-resources",
-    title: "Other resources",
-    description: "Explore helpful information selected for the Hillside site.",
-    status: "Planned",
+    title: "Resource library",
+    description:
+      "Try the sample resource-library experience while approved content is gathered.",
+    status: "Preview",
+    href: "/resources",
     icon: "resources",
   },
 ];

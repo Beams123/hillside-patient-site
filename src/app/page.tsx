@@ -133,8 +133,8 @@ export default async function Home() {
                 What you need, in one place
               </h2>
               <p className="mt-5 max-w-2xl text-base leading-7 text-brand-muted">
-                Open the weekly menu or preview the focused information areas
-                planned for this site as verified content is added.
+                Open the weekly menu, meet the staff, or try the sample resource
+                library while verified content is gathered.
               </p>
             </div>
 
