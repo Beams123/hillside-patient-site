@@ -138,6 +138,12 @@
   z-index: 1;
 }
 
+@media (max-width: 47.999rem) {
+  .ambient-hero-section > :not([aria-hidden="true"]) {
+    padding-top: 13.5rem;
+  }
+}
+
 @media (min-width: 48rem) {
   .ambient-hero-section {
     margin-top: 0;
@@ -235,23 +241,6 @@
 .gold-glow-card:focus-visible::before,
 .gold-glow-card:focus-within::before {
   opacity: 1;
-}
-
-@media (max-width: 639px) {
-  .ambient-sign-image {
-    -webkit-mask-image: linear-gradient(
-      to bottom,
-      black 0%,
-      black 4%,
-      transparent 23%
-    );
-    mask-image: linear-gradient(
-      to bottom,
-      black 0%,
-      black 4%,
-      transparent 23%
-    );
-  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
