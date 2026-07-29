@@ -18,6 +18,18 @@ const icons: Record<RequestCategory["icon"], LucideIcon> = {
   visitor: UserRoundCheck,
 };
 
+export function RequestCategoryIcon({
+  icon,
+  className,
+}: {
+  icon: RequestCategory["icon"];
+  className?: string;
+}) {
+  const Icon = icons[icon];
+
+  return <Icon className={className} strokeWidth={1.75} aria-hidden="true" />;
+}
+
 type RequestCategoryCardProps = {
   category: RequestCategory;
 };
@@ -25,13 +37,11 @@ type RequestCategoryCardProps = {
 export function RequestCategoryCard({
   category,
 }: RequestCategoryCardProps) {
-  const Icon = icons[category.icon];
-
   const content = (
     <>
       <div className="flex items-start justify-between gap-4">
         <span className="flex size-12 items-center justify-center rounded-xl border border-brand-gold/20 bg-brand-gold/[0.07] text-brand-gold">
-          <Icon className="size-5" strokeWidth={1.75} aria-hidden="true" />
+          <RequestCategoryIcon icon={category.icon} className="size-5" />
         </span>
         <span className="rounded-full border border-white/10 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-brand-muted">
           {category.statusLabel}

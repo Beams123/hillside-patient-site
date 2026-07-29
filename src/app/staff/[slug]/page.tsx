@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Mail, ShieldCheck } from "lucide-react";
 import { notFound } from "next/navigation";
 
+import { AmbientHillsideSign } from "@/components/ambient-hillside-sign";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { getStaffInitials } from "@/components/staff-card";
+import { StaffPortrait } from "@/components/staff-portrait";
 import { getHillsidePublicData } from "@/lib/hillside-data";
 
 type StaffProfilePageProps = {
@@ -52,6 +53,10 @@ export default async function StaffProfilePage({
     notFound();
   }
 
+  const biographyParagraphs = member.bio
+    ? member.bio.split("\n")
+    : ["A public biography has not been posted yet."];
+
   return (
     <div id="top" className="min-h-screen overflow-x-clip bg-background">
       <a
@@ -66,65 +71,108 @@ export default async function StaffProfilePage({
       <main id="main-content" tabIndex={-1}>
         <section
           aria-labelledby="profile-heading"
-          className="relative isolate overflow-hidden border-b border-brand-gold/15"
+          className="relative isolate overflow-hidden"
         >
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_82%_18%,rgba(210,176,103,0.12),transparent_32%)]"
-          />
-          <div className="mx-auto grid w-full max-w-7xl gap-12 px-5 py-16 sm:px-8 sm:py-20 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-end lg:px-12 lg:py-24">
-            <div
-              aria-hidden="true"
-              className="flex size-24 items-center justify-center rounded-full border border-brand-gold/35 bg-brand-gold/[0.07] text-xl font-semibold tracking-[0.14em] text-brand-gold sm:size-28"
-            >
-              {getStaffInitials(member.name)}
-            </div>
+          <AmbientHillsideSign />
+          <div className="mx-auto w-full max-w-7xl px-5 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
+            <div className="grid gap-12 sm:max-w-[52%] lg:grid-cols-[auto_minmax(0,1fr)] lg:items-end">
+              <StaffPortrait
+                member={member}
+                className="size-32 text-xl sm:size-40 sm:text-2xl"
+                sizes="(max-width: 640px) 128px, 160px"
+                priority
+              />
 
-            <div>
-              <Link
-                href="/staff"
-                className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-gold transition-colors hover:text-brand-gold-light"
-              >
-                <ArrowLeft className="size-4" aria-hidden="true" />
-                Back to staff directory
-              </Link>
-              <p className="mt-8 text-sm font-semibold uppercase tracking-[0.24em] text-brand-gold">
-                Staff profile
-              </p>
-              <h1
-                id="profile-heading"
-                className="mt-4 max-w-4xl text-balance text-5xl font-semibold leading-[1.02] tracking-[-0.05em] text-brand-cream sm:text-6xl"
-              >
-                {member.name}
-              </h1>
-              <p className="mt-5 text-xl leading-8 text-brand-muted">
-                {member.title}
-              </p>
+              <div>
+                <Link
+                  href="/staff"
+                  className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-gold transition-colors hover:text-brand-gold-light"
+                >
+                  <ArrowLeft className="size-4" aria-hidden="true" />
+                  Back to staff directory
+                </Link>
+                <p className="mt-8 text-sm font-semibold uppercase tracking-[0.24em] text-brand-gold">
+                  Staff profile
+                </p>
+                <h1
+                  id="profile-heading"
+                  className="mt-4 text-balance text-5xl font-semibold leading-[1.02] tracking-[-0.05em] text-brand-cream sm:text-6xl"
+                >
+                  {member.name}
+                </h1>
+                <p className="mt-5 text-xl leading-8 text-brand-muted">
+                  {member.title}
+                </p>
+              </div>
             </div>
           </div>
         </section>
 
         <section aria-labelledby="bio-heading" className="bg-brand-surface">
           <div className="mx-auto w-full max-w-7xl px-5 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
-            <div className="max-w-3xl rounded-2xl border border-white/[0.09] bg-brand-panel p-6 sm:p-9">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-gold">
-                About
-              </p>
-              <h2
-                id="bio-heading"
-                className="mt-3 text-3xl font-semibold tracking-tight text-brand-cream"
-              >
-                Biography
-              </h2>
-              <p className="mt-6 text-lg leading-8 text-brand-muted">
-                {member.bio ||
-                  "A public biography has not been posted yet."}
-              </p>
+            <div
+              className={
+                member.email
+                  ? "grid max-w-5xl gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start"
+                  : "max-w-3xl"
+              }
+            >
+              <article className="rounded-2xl border border-white/[0.09] bg-brand-panel p-6 sm:p-9">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-gold">
+                  About
+                </p>
+                <h2
+                  id="bio-heading"
+                  className="mt-3 text-3xl font-semibold tracking-tight text-brand-cream"
+                >
+                  Biography
+                </h2>
+                <div className="mt-6 space-y-5 text-lg leading-8 text-brand-muted">
+                  {biographyParagraphs.map((paragraph, index) => (
+                    <p key={`${member.slug}-bio-${index}`}>{paragraph}</p>
+                  ))}
+                </div>
 
-              <p className="mt-10 inline-flex items-center gap-2 rounded-full border border-brand-gold/20 bg-brand-gold/[0.06] px-4 py-2 text-sm text-brand-gold">
-                <ShieldCheck className="size-4" aria-hidden="true" />
-                Approved public information only
-              </p>
+                <p className="mt-10 inline-flex items-center gap-2 rounded-full border border-brand-gold/20 bg-brand-gold/[0.06] px-4 py-2 text-sm text-brand-gold">
+                  <ShieldCheck className="size-4" aria-hidden="true" />
+                  Approved public information only
+                </p>
+              </article>
+
+              {member.email ? (
+                <aside
+                  aria-labelledby="contact-heading"
+                  className="rounded-2xl border border-white/[0.09] bg-brand-panel p-6 sm:p-7"
+                >
+                  <div className="flex size-11 items-center justify-center rounded-xl border border-brand-gold/20 bg-brand-gold/[0.07] text-brand-gold">
+                    <Mail
+                      className="size-5"
+                      strokeWidth={1.75}
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <p className="mt-6 text-xs font-semibold uppercase tracking-[0.18em] text-brand-gold">
+                    Contact
+                  </p>
+                  <h2
+                    id="contact-heading"
+                    className="mt-2 text-xl font-semibold tracking-tight text-brand-cream"
+                  >
+                    Public work email
+                  </h2>
+                  <a
+                    href={`mailto:${member.email}`}
+                    className="mt-4 block break-all text-sm font-semibold leading-6 text-brand-gold underline decoration-brand-gold/35 underline-offset-4 transition-colors hover:text-brand-gold-light"
+                  >
+                    {member.email}
+                  </a>
+                  <p className="mt-6 border-t border-white/[0.08] pt-5 text-xs leading-5 text-brand-muted">
+                    For general communication only. Do not include medical,
+                    treatment, or other confidential information in an
+                    unsecured email.
+                  </p>
+                </aside>
+              ) : null}
             </div>
           </div>
         </section>

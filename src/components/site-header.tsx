@@ -7,11 +7,11 @@ const coinEdgeDepths = [-3, -2, -1, 0, 1, 2, 3];
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-50 border-b border-brand-gold/15 bg-background/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 bg-transparent md:fixed md:inset-x-0">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-6 px-5 sm:px-8 lg:px-12">
         <Link
-          href="/"
-          aria-label="Hillside Detox home — progress not perfection"
+          href="/master-schedule"
+          aria-label="Hillside Detox master schedule — progress not perfection"
           className="site-logo-link inline-flex min-h-11 items-center gap-3 rounded-md [perspective:500px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-4 focus-visible:ring-offset-background"
         >
           <span
@@ -35,6 +35,7 @@ export function SiteHeader() {
                 src="/hillside-coin-front.png"
                 alt=""
                 fill
+                loading="eager"
                 sizes="44px"
                 className="hillside-coin-image pointer-events-none scale-[1.03] object-cover"
               />
@@ -45,6 +46,7 @@ export function SiteHeader() {
                 src="/hillside-coin-back.png"
                 alt=""
                 fill
+                loading="eager"
                 sizes="44px"
                 className="hillside-coin-image pointer-events-none scale-[1.03] object-cover"
               />
@@ -78,16 +80,16 @@ export function SiteHeader() {
 
       <nav
         aria-label="Mobile navigation"
-        className="border-t border-white/[0.06] md:hidden"
+        className="md:hidden"
       >
-        <ul className="grid grid-cols-6">
+        <ul className="grid grid-cols-4">
           {navigationItems.map((item) => (
             <li key={item.href}>
               <Link
                 href={item.href}
                 className="inline-flex min-h-11 w-full items-center justify-center px-0.5 text-[0.55rem] font-semibold uppercase tracking-[0.04em] text-brand-muted transition-colors hover:text-brand-cream sm:text-xs sm:tracking-[0.1em]"
               >
-                {item.label}
+                {"mobileLabel" in item ? item.mobileLabel : item.label}
               </Link>
             </li>
           ))}

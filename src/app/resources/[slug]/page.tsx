@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, FlaskConical } from "lucide-react";
 import { notFound } from "next/navigation";
 
+import { AmbientHillsideSign } from "@/components/ambient-hillside-sign";
 import { ResourceLibraryIcon } from "@/components/resource-library-card";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -62,43 +63,42 @@ export default async function ResourcePreviewPage({
       <main id="main-content" tabIndex={-1}>
         <section
           aria-labelledby="resource-heading"
-          className="relative isolate overflow-hidden border-b border-brand-gold/15"
+          className="relative isolate overflow-hidden"
         >
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_82%_18%,rgba(210,176,103,0.12),transparent_32%)]"
-          />
-          <div className="mx-auto grid w-full max-w-7xl gap-10 px-5 py-16 sm:px-8 sm:py-20 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-end lg:px-12 lg:py-24">
-            <div
-              aria-hidden="true"
-              className="flex size-24 items-center justify-center rounded-2xl border border-brand-gold/35 bg-brand-gold/[0.07] text-brand-gold sm:size-28"
-            >
-              <ResourceLibraryIcon
-                icon={resource.icon}
-                className="size-10 sm:size-12"
-              />
-            </div>
+          <AmbientHillsideSign />
+          <div className="mx-auto w-full max-w-7xl px-5 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
+            <div className="grid gap-10 sm:max-w-[52%] lg:grid-cols-[auto_minmax(0,1fr)] lg:items-end">
+              <div
+                aria-hidden="true"
+                className="flex size-24 items-center justify-center rounded-2xl border border-brand-gold/35 bg-brand-gold/[0.07] text-brand-gold sm:size-28"
+              >
+                <ResourceLibraryIcon
+                  icon={resource.icon}
+                  className="size-10 sm:size-12"
+                />
+              </div>
 
-            <div>
-              <Link
-                href="/resources"
-                className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-gold transition-colors hover:text-brand-gold-light"
-              >
-                <ArrowLeft className="size-4" aria-hidden="true" />
-                Back to resource library
-              </Link>
-              <p className="mt-8 text-sm font-semibold uppercase tracking-[0.24em] text-brand-gold">
-                {resource.category} · Sample
-              </p>
-              <h1
-                id="resource-heading"
-                className="mt-4 max-w-4xl text-balance text-5xl font-semibold leading-[1.02] tracking-[-0.05em] text-brand-cream sm:text-6xl"
-              >
-                {resource.title}
-              </h1>
-              <p className="mt-5 max-w-3xl text-lg leading-8 text-brand-muted">
-                {resource.description}
-              </p>
+              <div>
+                <Link
+                  href="/resources"
+                  className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-gold transition-colors hover:text-brand-gold-light"
+                >
+                  <ArrowLeft className="size-4" aria-hidden="true" />
+                  Back to resource library
+                </Link>
+                <p className="mt-8 text-sm font-semibold uppercase tracking-[0.24em] text-brand-gold">
+                  {resource.category} · Sample
+                </p>
+                <h1
+                  id="resource-heading"
+                  className="mt-4 text-balance text-5xl font-semibold leading-[1.02] tracking-[-0.05em] text-brand-cream sm:text-6xl"
+                >
+                  {resource.title}
+                </h1>
+                <p className="mt-5 text-lg leading-8 text-brand-muted">
+                  {resource.description}
+                </p>
+              </div>
             </div>
           </div>
         </section>

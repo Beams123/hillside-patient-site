@@ -220,6 +220,23 @@
   opacity: 1;
 }
 
+@media (max-width: 639px) {
+  .ambient-sign-image {
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      black 0%,
+      black 4%,
+      transparent 23%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      black 0%,
+      black 4%,
+      transparent 23%
+    );
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .hillside-coin {
     transition: transform 800ms cubic-bezier(0.34, 1.35, 0.64, 1);

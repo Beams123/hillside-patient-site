@@ -3,6 +3,7 @@
 import { useState, type KeyboardEvent } from "react";
 
 import { ScheduleDayCard } from "@/components/schedule-day-card";
+import { orderWeekSundayFirst } from "@/lib/week-order";
 import type {
   ProgramCode,
   WeeklyProgramSchedule,
@@ -111,7 +112,7 @@ export function WeeklySchedule({
             hidden={!isSelected}
             className="mt-6 space-y-4"
           >
-            {schedule.days.map((scheduleDay) => (
+            {orderWeekSundayFirst(schedule.days).map((scheduleDay) => (
               <ScheduleDayCard
                 key={`${schedule.id}-${scheduleDay.date}`}
                 programCode={schedule.title}

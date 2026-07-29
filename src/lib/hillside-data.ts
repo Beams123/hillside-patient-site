@@ -2,29 +2,48 @@ import "server-only";
 
 import {
   programCodes,
+  staffDirectoryGroups,
   weekDays,
   type HillsideDataResult,
   type HillsidePublicData,
   type MenuDay,
   type ProgramCode,
   type ScheduleDay,
+  type ScheduleActivity,
   type ScheduleGroup,
+  type StaffDirectoryGroup,
   type StaffMember,
   type WeekDay,
   type WeeklyProgramSchedule,
 } from "@/types/hillside-data";
 
 const feedRevalidationSeconds = 300;
-const maximumResponseCharacters = 100_000;
+const maximumResponseCharacters = 500_000;
 const maximumGroupsPerProgram = 12;
+const maximumActivitiesPerDay = 6;
 const maximumMenuItemsPerMeal = 8;
 const maximumStaffMembers = 50;
 const maximumDepartmentsPerStaffMember = 2;
+const maximumStaffBioLength = 8_000;
+const maximumStaffDisplayOrder = 9_999;
 const publicStaffDepartments = new Set(["Clinical", "Leadership"]);
+const publicStaffDirectoryGroups = new Set(staffDirectoryGroups);
+const sundayFirstWeekDays = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+] as const satisfies readonly WeekDay[];
 
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 const displayTimePattern = /^(\d{1,2}):([0-5]\d) (AM|PM)$/;
 const staffSlugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const staffEmailPattern =
+  /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@hillsidedetox\.com$/i;
+const staffPortraitFileIdPattern = /^[A-Za-z0-9_-]{10,100}$/;
 const coverageFacilitatorPattern =
   /^[A-Za-z][A-Za-z .'-]{0,80}\s*\([^)]*\bcovering\b[^)]*\)$/i;
 
@@ -47,6 +66,33 @@ function readString(
     .trim();
 
   if ((!allowEmpty && normalized.length === 0) || normalized.length > maximumLength) {
+    return null;
+  }
+
+  return normalized;
+}
+
+function readMultilineString(
+  value: unknown,
+  maximumLength: number,
+  allowEmpty = false,
+): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalized = value
+    .replace(/\r\n?/g, "\n")
+    .replace(/[\u0000-\u0009\u000B-\u001F\u007F]/g, " ")
+    .split("\n")
+    .map((line) => line.replace(/[ \t]+/g, " ").trim())
+    .filter((line) => line.length > 0)
+    .join("\n");
+
+  if (
+    (!allowEmpty && normalized.length === 0) ||
+    normalized.length > maximumLength
+  ) {
     return null;
   }
 
@@ -152,20 +198,66 @@ function parseScheduleGroups(
   return groups;
 }
 
-function getWeekDates(scheduleDate: string) {
+function parseScheduleActivity(
+  value: unknown,
+): ScheduleActivity | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const time = readString(value.time, 20);
+  const title = readString(value.title, 180);
+  const timeValue = time === null ? null : getTimeValue(time);
+
+  if (time === null || timeValue === null || title === null) {
+    return null;
+  }
+
+  return {
+    time,
+    timeValue,
+    title,
+  };
+}
+
+function parseScheduleActivities(
+  value: unknown,
+): ScheduleActivity[] | null {
+  if (
+    !Array.isArray(value) ||
+    value.length > maximumActivitiesPerDay
+  ) {
+    return null;
+  }
+
+  const activities = value.map(parseScheduleActivity);
+
+  return activities.every(
+    (activity): activity is ScheduleActivity => activity !== null,
+  )
+    ? activities
+    : null;
+}
+
+function getWeekDates(scheduleDate: string, startsOnSunday = false) {
   const anchorDate = new Date(`${scheduleDate}T12:00:00Z`);
 
   if (Number.isNaN(anchorDate.getTime())) {
     return [];
   }
 
-  const daysSinceMonday = (anchorDate.getUTCDay() + 6) % 7;
-  const monday = new Date(anchorDate);
-  monday.setUTCDate(anchorDate.getUTCDate() - daysSinceMonday);
+  const daysSinceStart = startsOnSunday
+    ? anchorDate.getUTCDay()
+    : (anchorDate.getUTCDay() + 6) % 7;
+  const weekStart = new Date(anchorDate);
+  weekStart.setUTCDate(anchorDate.getUTCDate() - daysSinceStart);
+  const orderedWeekDays = startsOnSunday
+    ? sundayFirstWeekDays
+    : weekDays;
 
-  return weekDays.map((day, index) => {
-    const date = new Date(monday);
-    date.setUTCDate(monday.getUTCDate() + index);
+  return orderedWeekDays.map((day, index) => {
+    const date = new Date(weekStart);
+    date.setUTCDate(weekStart.getUTCDate() + index);
 
     return {
       day,
@@ -177,6 +269,7 @@ function getWeekDates(scheduleDate: string) {
 function parseScheduleDay(
   value: unknown,
   supportsLocation: boolean,
+  supportsActivities: boolean,
 ): ScheduleDay | null {
   if (!isRecord(value)) {
     return null;
@@ -185,13 +278,17 @@ function parseScheduleDay(
   const day = readString(value.day, 9);
   const date = readString(value.date, 10);
   const groups = parseScheduleGroups(value.groups, supportsLocation);
+  const activities = supportsActivities
+    ? parseScheduleActivities(value.activities)
+    : [];
 
   if (
     day === null ||
     !weekDays.includes(day as WeekDay) ||
     date === null ||
     !datePattern.test(date) ||
-    groups === null
+    groups === null ||
+    activities === null
   ) {
     return null;
   }
@@ -200,6 +297,7 @@ function parseScheduleDay(
     day: day as WeekDay,
     date,
     groups,
+    activities,
   };
 }
 
@@ -208,15 +306,17 @@ function parseWeeklyProgramSchedule(
   value: unknown,
   scheduleDate: string,
   supportsLocation: boolean,
+  supportsActivities: boolean,
+  startsOnSunday: boolean,
 ): WeeklyProgramSchedule | null {
   if (!Array.isArray(value) || value.length !== weekDays.length) {
     return null;
   }
 
   const days = value.map((day) =>
-    parseScheduleDay(day, supportsLocation),
+    parseScheduleDay(day, supportsLocation, supportsActivities),
   );
-  const expectedWeek = getWeekDates(scheduleDate);
+  const expectedWeek = getWeekDates(scheduleDate, startsOnSunday);
 
   if (
     expectedWeek.length !== weekDays.length ||
@@ -257,6 +357,7 @@ function parseLegacyProgramSchedule(
     days: week.map((day) => ({
       ...day,
       groups: day.date === scheduleDate ? groups : [],
+      activities: [],
     })),
   };
 }
@@ -327,7 +428,89 @@ function parseMenuDay(value: unknown, legacyVersion: boolean): MenuDay | null {
   };
 }
 
-function parseStaffMember(value: unknown): StaffMember | null {
+function inferStaffDirectoryGroup(
+  title: string,
+  departments: string[],
+): StaffDirectoryGroup {
+  if (departments.includes("Leadership")) {
+    return "Leadership";
+  }
+
+  if (/\bcase manager\b/i.test(title)) {
+    return "Case Managers";
+  }
+
+  if (/\bcounselor\b/i.test(title)) {
+    return "Counselors";
+  }
+
+  return "Staff";
+}
+
+function readStaffDisplayOrder(
+  value: unknown,
+  fallbackOrder: number,
+): number | null {
+  if (
+    typeof value === "number" &&
+    Number.isSafeInteger(value) &&
+    value >= 0 &&
+    value <= maximumStaffDisplayOrder
+  ) {
+    return value;
+  }
+
+  if (typeof value === "string" && /^\d{1,4}$/.test(value.trim())) {
+    const parsedValue = Number(value);
+
+    return parsedValue <= maximumStaffDisplayOrder ? parsedValue : null;
+  }
+
+  return fallbackOrder;
+}
+
+function readStaffPortraitUrl(value: unknown): string | null {
+  const portraitUrl = readString(value, 500, true);
+
+  if (portraitUrl === null || portraitUrl.length === 0) {
+    return portraitUrl;
+  }
+
+  try {
+    const url = new URL(portraitUrl);
+    const fileIds = url.searchParams.getAll("id");
+    const sizes = url.searchParams.getAll("sz");
+    const parameterNames = Array.from(url.searchParams.keys());
+
+    if (
+      url.protocol !== "https:" ||
+      url.hostname !== "drive.google.com" ||
+      url.port !== "" ||
+      url.username !== "" ||
+      url.password !== "" ||
+      url.pathname !== "/thumbnail" ||
+      url.hash !== "" ||
+      fileIds.length !== 1 ||
+      !staffPortraitFileIdPattern.test(fileIds[0]) ||
+      sizes.length !== 1 ||
+      sizes[0] !== "w800" ||
+      parameterNames.length !== 2 ||
+      !parameterNames.every((name) => name === "id" || name === "sz")
+    ) {
+      return null;
+    }
+
+    return `https://drive.google.com/thumbnail?id=${fileIds[0]}&sz=w800`;
+  } catch {
+    return null;
+  }
+}
+
+function parseStaffMember(
+  value: unknown,
+  supportsDirectoryDetails: boolean,
+  fallbackOrder: number,
+): StaffMember | null {
   if (!isRecord(value)) {
     return null;
   }
@@ -338,7 +521,19 @@ function parseStaffMember(value: unknown): StaffMember | null {
   const departments = Array.isArray(value.departments)
     ? value.departments.map((department) => readString(department, 60))
     : null;
-  const bio = readString(value.bio, 1_200, true);
+  const bio = readMultilineString(value.bio, maximumStaffBioLength, true);
+  const directoryGroup = supportsDirectoryDetails
+    ? readString(value.directoryGroup, 40)
+    : null;
+  const displayOrder = supportsDirectoryDetails
+    ? readStaffDisplayOrder(value.displayOrder, fallbackOrder)
+    : fallbackOrder;
+  const email = supportsDirectoryDetails
+    ? readString(value.email, 120, true)
+    : "";
+  const portraitUrl = supportsDirectoryDetails
+    ? readStaffPortraitUrl(value.portraitUrl)
+    : "";
 
   if (
     slug === null ||
@@ -356,20 +551,46 @@ function parseStaffMember(value: unknown): StaffMember | null {
     ) ||
     new Set(departments.map((department) => department.toLocaleLowerCase()))
       .size !== departments.length ||
-    bio === null
+    bio === null ||
+    displayOrder === null ||
+    email === null ||
+    (email.length > 0 && !staffEmailPattern.test(email)) ||
+    portraitUrl === null ||
+    (supportsDirectoryDetails &&
+      (directoryGroup === null ||
+        !publicStaffDirectoryGroups.has(
+          directoryGroup as StaffDirectoryGroup,
+        )))
   ) {
     return null;
   }
 
-  return { slug, name, title, departments, bio };
+  return {
+    slug,
+    name,
+    title,
+    departments,
+    bio,
+    directoryGroup: supportsDirectoryDetails
+      ? (directoryGroup as StaffDirectoryGroup)
+      : inferStaffDirectoryGroup(title, departments),
+    displayOrder,
+    email,
+    portraitUrl,
+  };
 }
 
-function parseStaff(value: unknown): StaffMember[] | null {
+function parseStaff(
+  value: unknown,
+  supportsDirectoryDetails: boolean,
+): StaffMember[] | null {
   if (!Array.isArray(value) || value.length > maximumStaffMembers) {
     return null;
   }
 
-  const staff = value.map(parseStaffMember);
+  const staff = value.map((member, index) =>
+    parseStaffMember(member, supportsDirectoryDetails, index + 1),
+  );
 
   if (!staff.every((member): member is StaffMember => member !== null)) {
     return null;
@@ -388,20 +609,26 @@ function parsePublicData(value: unknown): HillsidePublicData | null {
       value.version !== 2 &&
       value.version !== 3 &&
       value.version !== 4 &&
-      value.version !== 5)
+      value.version !== 5 &&
+      value.version !== 6 &&
+      value.version !== 7 &&
+      value.version !== 8)
   ) {
     return null;
   }
 
   const feedVersion = value.version;
   const legacyMenuVersion = feedVersion === 1;
+  const startsOnSunday = feedVersion >= 8;
   const generatedAt = readString(value.generatedAt, 40);
   const scheduleDate = readString(value.scheduleDate, 10);
   const weekLabel = readString(value.weekLabel, 40);
   const schedulesValue = value.schedules;
   const menuValue = value.menu;
   const staff =
-    feedVersion >= 4 ? parseStaff(value.staff) : [];
+    feedVersion >= 4
+      ? parseStaff(value.staff, feedVersion >= 6)
+      : [];
 
   if (
     generatedAt === null ||
@@ -424,6 +651,8 @@ function parsePublicData(value: unknown): HillsidePublicData | null {
           schedulesValue[code],
           scheduleDate,
           feedVersion >= 5,
+          feedVersion >= 7,
+          startsOnSunday,
         )
       : parseLegacyProgramSchedule(
           code,
@@ -434,11 +663,16 @@ function parsePublicData(value: unknown): HillsidePublicData | null {
   const menu = menuValue.map((day) =>
     parseMenuDay(day, legacyMenuVersion),
   );
+  const expectedMenuWeek = getWeekDates(scheduleDate, startsOnSunday);
 
   if (
     schedules.some((schedule) => schedule === null) ||
     menu.some((day) => day === null) ||
-    menu.some((day, index) => day?.day !== weekDays[index])
+    menu.some(
+      (day, index) =>
+        day?.day !== expectedMenuWeek[index]?.day ||
+        day.date !== expectedMenuWeek[index]?.date,
+    )
   ) {
     return null;
   }

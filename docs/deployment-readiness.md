@@ -4,11 +4,10 @@ The site is not cleared for public deployment yet.
 
 ## Dependency blocker
 
-As of July 28, 2026, Next.js 16.2.12 is the latest stable release, but its
-installed dependencies include:
+As of July 29, 2026, the installed Next.js 16.2.12 dependencies include:
 
-- `postcss@8.4.31`, while the current path-traversal advisory is patched in
-  `postcss@8.5.18`;
+- `postcss@8.4.31`, which is affected by the current CSS-stringification,
+  source-map file-read, and path-traversal advisories;
 - `sharp@0.34.5`, while the current libvips advisory is patched in
   `sharp@0.35.0`.
 
@@ -32,6 +31,7 @@ Before public deployment:
 
 Primary advisories:
 
+- <https://github.com/advisories/GHSA-qx2v-qp2m-jg93>
 - <https://github.com/advisories/GHSA-6g55-p6wh-862q>
 - <https://github.com/advisories/GHSA-r28c-9q8g-f849>
 - <https://github.com/advisories/GHSA-f88m-g3jw-g9cj>
@@ -42,16 +42,34 @@ Before public deployment:
 
 - Keep the schedule, menu, and staff Google Sheets private.
 - Verify the Apps Script `/exec` response in a private browser window.
-- Confirm it contains only schedule date/week, Monday–Sunday CSS and ATS
-  times/topics/facilitators/approved locations, weekly meal-item lists, and
-  checked staff slug/name/title/departments/bio fields.
+- Confirm it contains only schedule date/week, Sunday–Saturday CSS and ATS
+  group times/topics/facilitators/approved locations, daily-activity
+  times/titles, weekly meal-item lists, and checked staff
+  slug/name/title/departments/bio/group/order/approved-email/
+  allowlisted-portrait fields.
 - Confirm unchecked staff rows and the `Publish` checkbox are absent from the
   public response.
 - Review every published biography for patient information, confidential work,
   personal contact details, and unapproved claims before checking `Publish`.
+- Confirm every public work email and portrait has staff/leadership approval,
+  and that portraits contain no patients or confidential background details.
 - Reassess the facilitator field if the schedule workbook ever begins using
   those cells for anyone other than staff members supervising groups.
 - Configure `HILLSIDE_DATA_FEED_URL` as a server-only environment variable.
-- Do not add forms, analytics, authentication, or other data collection until
-  their privacy, retention, access-control, and incident-response architecture
-  has been reviewed.
+- Keep every request form disabled until its privacy, retention,
+  access-control, and incident-response architecture has been reviewed.
+- For alternative-meal orders, complete every step in
+  `docs/alternative-meal-orders.md`. In particular, verify the private
+  workbook permissions, hosting-provider BAA/approval, shared-secret
+  destination and unauthenticated `/exec` JSON health response, 2-hour cutoff,
+  30-day deletion trigger, accepted
+  internet-accessible submission risk, and paper downtime fallback before
+  enabling production submissions.
+- For grievance, package, and visitor requests, complete every step in
+  `docs/private-patient-requests.md`. Verify that the three workbooks remain
+  separately Restricted, reviewer access is role-appropriate, the
+  hosting-provider approval applies, the shared-secret destination passes
+  its unauthenticated `/exec` JSON health check and synthetic testing,
+  management accepts the internet-accessible submission surface, and an
+  approved retention/disposal rule is implemented for each request type
+  before enabling production submissions.

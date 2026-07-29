@@ -14,21 +14,15 @@ export type ResourcePreview = {
 };
 
 export const navigationItems = [
-  { label: "Today", href: "/" },
-  { label: "Schedule", href: "/#schedule" },
-  { label: "Menu", href: "/menu" },
+  {
+    label: "Master Schedule",
+    mobileLabel: "Master",
+    href: "/master-schedule",
+  },
   { label: "Staff", href: "/staff" },
   { label: "Requests", href: "/requests" },
   { label: "Resources", href: "/resources" },
 ] as const;
-
-export const homepageContent = {
-  eyebrow: "Welcome to Hillside",
-  title: "Today at Hillside",
-  previewLabel: "Site preview",
-  introduction:
-    "A simple, welcoming place to see the day ahead and find useful facility information.",
-} as const;
 
 export const resourcePreviews: ResourcePreview[] = [
   {

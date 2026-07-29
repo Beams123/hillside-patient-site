@@ -14,14 +14,22 @@ const STAFF_SPREADSHEET_ID =
   "1CpGOnpZda9GMkGfs3iZnmxPMJ9hRR0xfD6hRk5fFi-g";
 const FACILITY_TIME_ZONE = "America/New_York";
 const CACHE_SECONDS = 300;
-const PUBLIC_PAYLOAD_VERSION = 5;
+const PUBLIC_PAYLOAD_VERSION = 8;
+const PUBLIC_CACHE_KEY = "public-payload-v8-sunday-first-week";
 const MENU_ITEMS_RANGE = "D4:K31";
 const MENU_ITEMS_PER_MEAL = 8;
 const MEALS_PER_DAY = 4;
-const STAFF_DIRECTORY_RANGE = "A4:F53";
+const STAFF_DIRECTORY_RANGE = "A4:J53";
 const MAXIMUM_STAFF_MEMBERS = 50;
 const MAXIMUM_DEPARTMENTS_PER_STAFF_MEMBER = 2;
+const MAXIMUM_STAFF_BIO_LENGTH = 8000;
 const PUBLIC_STAFF_DEPARTMENTS = ["Clinical"];
+const PUBLIC_STAFF_DIRECTORY_GROUPS = [
+  "Leadership",
+  "Counselors",
+  "Case Managers",
+  "Staff",
+];
 
 const PROGRAM_CONFIGS = [
   {
@@ -29,12 +37,14 @@ const PROGRAM_CONFIGS = [
     timeColumn: "A",
     contentColumns: ["B", "D", "F", "H", "J", "L", "N"],
     timeRows: [3, 5, 7, 9, 11],
+    activityRow: 13,
   },
   {
     code: "ATS",
     timeColumn: "Q",
     contentColumns: ["R", "T", "V", "X", "Z", "AB", "AD"],
     timeRows: [3, 5, 7, 9],
+    activityRow: 13,
   },
 ];
 
@@ -76,6 +86,8 @@ function authorizeBridge() {
   const payload = buildPayload_();
   const cssGroupCount = countWeeklyGroups_(payload.schedules.CSS);
   const atsGroupCount = countWeeklyGroups_(payload.schedules.ATS);
+  const cssActivityCount = countWeeklyActivities_(payload.schedules.CSS);
+  const atsActivityCount = countWeeklyActivities_(payload.schedules.ATS);
 
   console.log(
     "Bridge verified: " +
@@ -84,7 +96,11 @@ function authorizeBridge() {
       cssGroupCount +
       " CSS groups, and " +
       atsGroupCount +
-      " ATS groups.",
+      " ATS groups; " +
+      cssActivityCount +
+      " CSS activities, and " +
+      atsActivityCount +
+      " ATS activities.",
   );
 
   return payload;
@@ -113,16 +129,22 @@ function countWeeklyGroups_(schedule) {
   }, 0);
 }
 
+function countWeeklyActivities_(schedule) {
+  return (schedule || []).reduce(function (total, day) {
+    return total + (day.activities || []).length;
+  }, 0);
+}
+
 function getCachedPayload_() {
   const cache = CacheService.getScriptCache();
-  const cached = cache.get("public-payload-v5");
+  const cached = cache.get(PUBLIC_CACHE_KEY);
 
   if (cached) {
     return JSON.parse(cached);
   }
 
   const payload = buildPayload_();
-  cache.put("public-payload-v5", JSON.stringify(payload), CACHE_SECONDS);
+  cache.put(PUBLIC_CACHE_KEY, JSON.stringify(payload), CACHE_SECONDS);
   return payload;
 }
 
@@ -138,10 +160,21 @@ function buildPayload_() {
   const schedules = {};
 
   PROGRAM_CONFIGS.forEach(function (config) {
-    schedules[config.code] = readWeeklyProgramSchedule_(
-      week.label,
+    const sundaySourceSchedule = readWeeklyProgramScheduleSafely_(
+      week.sundaySource.label,
       config,
-      week,
+      week.sundaySource,
+      [6],
+    );
+    const weekdaySourceSchedule = readWeeklyProgramScheduleSafely_(
+      week.weekdaySource.label,
+      config,
+      week.weekdaySource,
+      [0, 1, 2, 3, 4, 5],
+    );
+
+    schedules[config.code] = sundaySourceSchedule.concat(
+      weekdaySourceSchedule,
     );
   });
 
@@ -154,16 +187,33 @@ function buildPayload_() {
     scheduleDate: scheduleDate,
     weekLabel: week.label,
     schedules: schedules,
-    menu: readMenu_(week),
+    menu: readMenu_(week, now),
     staff: readStaffSafely_(),
   };
 }
 
 function getWeekDetails_(date) {
-  const dayNumber =
-    Number(Utilities.formatDate(date, FACILITY_TIME_ZONE, "u")) - 1;
-  const monday = new Date(date.getTime() - dayNumber * 24 * 60 * 60 * 1000);
-  const sunday = new Date(monday.getTime() + 6 * 24 * 60 * 60 * 1000);
+  const dayNumber = Number(
+    Utilities.formatDate(date, FACILITY_TIME_ZONE, "u"),
+  );
+  const sunday = addDays_(date, -(dayNumber % 7));
+  const saturday = addDays_(sunday, 6);
+  const sundaySourceMonday = addDays_(sunday, -6);
+  const weekdaySourceMonday = addDays_(sunday, 1);
+
+  return {
+    label:
+      Utilities.formatDate(sunday, FACILITY_TIME_ZONE, "MM/dd/yy") +
+      " - " +
+      Utilities.formatDate(saturday, FACILITY_TIME_ZONE, "MM/dd/yy"),
+    sunday: sunday,
+    sundaySource: getSourceWeekDetails_(sundaySourceMonday),
+    weekdaySource: getSourceWeekDetails_(weekdaySourceMonday),
+  };
+}
+
+function getSourceWeekDetails_(monday) {
+  const sunday = addDays_(monday, 6);
 
   return {
     label:
@@ -174,19 +224,73 @@ function getWeekDetails_(date) {
   };
 }
 
-function readWeeklyProgramSchedule_(sheetName, config, week) {
+function addDays_(date, days) {
+  return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
+}
+
+function readWeeklyProgramScheduleSafely_(
+  sheetName,
+  config,
+  week,
+  dayIndexes,
+) {
+  try {
+    return readWeeklyProgramSchedule_(
+      sheetName,
+      config,
+      week,
+      dayIndexes,
+    );
+  } catch (error) {
+    console.error(
+      config.code + " schedule read failed for " + sheetName,
+      error,
+    );
+
+    return createEmptySourceSchedule_(week, dayIndexes);
+  }
+}
+
+function createEmptySourceSchedule_(week, dayIndexes) {
+  return dayIndexes.map(function (dayIndex) {
+    const date = addDays_(week.monday, dayIndex);
+
+    return {
+      day: DAY_NAMES[dayIndex],
+      date: Utilities.formatDate(date, FACILITY_TIME_ZONE, "yyyy-MM-dd"),
+      groups: [],
+      activities: [],
+    };
+  });
+}
+
+function readWeeklyProgramSchedule_(
+  sheetName,
+  config,
+  week,
+  dayIndexes,
+) {
   const cellReferences = [];
   const sheetReference = quoteSheetName_(sheetName) + "!";
+  const contentColumns = dayIndexes.map(function (dayIndex) {
+    return config.contentColumns[dayIndex];
+  });
 
   config.timeRows.forEach(function (row) {
     cellReferences.push(sheetReference + config.timeColumn + row);
   });
 
-  config.contentColumns.forEach(function (contentColumn) {
+  contentColumns.forEach(function (contentColumn) {
     config.timeRows.forEach(function (row) {
       cellReferences.push(sheetReference + contentColumn + row);
       cellReferences.push(sheetReference + contentColumn + (row + 1));
     });
+  });
+
+  contentColumns.forEach(function (contentColumn) {
+    cellReferences.push(
+      sheetReference + contentColumn + config.activityRow,
+    );
   });
 
   const values = getFormattedRanges_(
@@ -199,9 +303,16 @@ function readWeeklyProgramSchedule_(sheetName, config, week) {
   const times = values.slice(0, config.timeRows.length).map(function (value) {
     return parseTime_(value);
   });
+  const activityStartIndex =
+    config.timeRows.length +
+    contentColumns.length * config.timeRows.length * 2;
+  const activityValues = values.slice(
+    activityStartIndex,
+    activityStartIndex + contentColumns.length,
+  );
   let contentIndex = config.timeRows.length;
 
-  return DAY_NAMES.map(function (day, dayIndex) {
+  return dayIndexes.map(function (dayIndex, selectedDayIndex) {
     const groups = config.timeRows.reduce(function (
       dayGroups,
       timeRow,
@@ -225,14 +336,15 @@ function readWeeklyProgramSchedule_(sheetName, config, week) {
 
       return dayGroups;
     }, []);
-    const date = new Date(
-      week.monday.getTime() + dayIndex * 24 * 60 * 60 * 1000,
-    );
+    const date = addDays_(week.monday, dayIndex);
 
     return {
-      day: day,
+      day: DAY_NAMES[dayIndex],
       date: Utilities.formatDate(date, FACILITY_TIME_ZONE, "yyyy-MM-dd"),
       groups: groups,
+      activities: parseDailyActivities_(
+        activityValues[selectedDayIndex],
+      ),
     };
   });
 }
@@ -372,27 +484,56 @@ function normalizeScheduleContent_(topic, facilitator) {
   };
 }
 
-function readMenu_(week) {
+function readMenu_(week, currentDate) {
   const menuValueRange = getFormattedRanges_(MENU_SPREADSHEET_ID, [
     quoteSheetName_("Menu Items") + "!" + MENU_ITEMS_RANGE,
   ])[0];
   const values = menuValueRange.values || [];
-
-  return DAY_NAMES.map(function (day, index) {
-    const firstMealRow = index * MEALS_PER_DAY;
-    const date = new Date(
-      week.monday.getTime() + index * 24 * 60 * 60 * 1000,
+  const isSunday =
+    Number(
+      Utilities.formatDate(currentDate, FACILITY_TIME_ZONE, "u"),
+    ) === 7;
+  const sundaySourceIndex = isSunday ? 6 : -1;
+  const sunday = createMenuDay_(
+    "Sunday",
+    week.sunday,
+    values,
+    sundaySourceIndex,
+  );
+  const weekdays = DAY_NAMES.slice(0, 6).map(function (day, index) {
+    return createMenuDay_(
+      day,
+      addDays_(week.weekdaySource.monday, index),
+      values,
+      isSunday ? -1 : index,
     );
-
-    return {
-      day: day,
-      date: Utilities.formatDate(date, FACILITY_TIME_ZONE, "yyyy-MM-dd"),
-      breakfast: sanitizeMenuItems_(values[firstMealRow]),
-      lunch: sanitizeMenuItems_(values[firstMealRow + 1]),
-      dinner: sanitizeMenuItems_(values[firstMealRow + 2]),
-      soupOfTheDay: sanitizeMenuItems_(values[firstMealRow + 3]),
-    };
   });
+
+  return [sunday].concat(weekdays);
+}
+
+function createMenuDay_(day, date, values, sourceDayIndex) {
+  const hasSource = sourceDayIndex >= 0;
+  const firstMealRow = hasSource
+    ? sourceDayIndex * MEALS_PER_DAY
+    : -1;
+
+  return {
+    day: day,
+    date: Utilities.formatDate(date, FACILITY_TIME_ZONE, "yyyy-MM-dd"),
+    breakfast: hasSource
+      ? sanitizeMenuItems_(values[firstMealRow])
+      : [],
+    lunch: hasSource
+      ? sanitizeMenuItems_(values[firstMealRow + 1])
+      : [],
+    dinner: hasSource
+      ? sanitizeMenuItems_(values[firstMealRow + 2])
+      : [],
+    soupOfTheDay: hasSource
+      ? sanitizeMenuItems_(values[firstMealRow + 3])
+      : [],
+  };
 }
 
 function sanitizeMenuItems_(row) {
@@ -420,7 +561,7 @@ function readStaff_() {
   const publishedSlugs = {};
 
   return values
-    .reduce(function (publishedStaff, row) {
+    .reduce(function (publishedStaff, row, rowIndex) {
       if (publishedStaff.length >= MAXIMUM_STAFF_MEMBERS) {
         return publishedStaff;
       }
@@ -436,7 +577,21 @@ function readStaff_() {
         department,
         isLeadership,
       );
-      const bio = sanitizePublicText_((row || [])[5], 1200);
+      const bio = sanitizePublicMultilineText_(
+        (row || [])[5],
+        MAXIMUM_STAFF_BIO_LENGTH,
+      );
+      const directoryGroup = sanitizeStaffDirectoryGroup_(
+        (row || [])[6],
+        title,
+        isLeadership,
+      );
+      const displayOrder = sanitizeStaffDisplayOrder_(
+        (row || [])[7],
+        rowIndex + 1,
+      );
+      const email = sanitizeStaffEmail_((row || [])[8]);
+      const portraitUrl = sanitizeStaffPortraitUrl_((row || [])[9]);
       const slug = createStaffSlug_(name);
 
       if (isPublished && name && title && slug && !publishedSlugs[slug]) {
@@ -447,11 +602,82 @@ function readStaff_() {
           title: title,
           departments: departments,
           bio: bio,
+          directoryGroup: directoryGroup,
+          displayOrder: displayOrder,
+          email: email,
+          portraitUrl: portraitUrl,
         });
       }
 
       return publishedStaff;
     }, []);
+}
+
+function sanitizeStaffDirectoryGroup_(value, title, isLeadership) {
+  const requestedGroup = sanitizePublicText_(value, 40);
+
+  if (PUBLIC_STAFF_DIRECTORY_GROUPS.indexOf(requestedGroup) >= 0) {
+    return requestedGroup;
+  }
+
+  if (isLeadership) {
+    return "Leadership";
+  }
+
+  if (/\bcase manager\b/i.test(title)) {
+    return "Case Managers";
+  }
+
+  if (/\bcounselor\b/i.test(title)) {
+    return "Counselors";
+  }
+
+  return "Staff";
+}
+
+function sanitizeStaffDisplayOrder_(value, fallbackOrder) {
+  const text = sanitizePublicText_(value, 4);
+
+  if (!/^\d{1,4}$/.test(text)) {
+    return fallbackOrder;
+  }
+
+  const displayOrder = Number(text);
+
+  return displayOrder <= 9999 ? displayOrder : fallbackOrder;
+}
+
+function sanitizeStaffEmail_(value) {
+  const email = sanitizePublicText_(value, 120).toLowerCase();
+
+  return /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@hillsidedetox\.com$/.test(
+    email,
+  )
+    ? email
+    : "";
+}
+
+function sanitizeStaffPortraitUrl_(value) {
+  const portraitSource = sanitizePublicText_(value, 500);
+
+  if (!portraitSource) {
+    return "";
+  }
+
+  const driveFileMatch = portraitSource.match(
+    /^https:\/\/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]{10,100})(?:\/|$)/i,
+  );
+  const driveIdMatch = portraitSource.match(
+    /^https:\/\/drive\.google\.com\/(?:open|thumbnail|uc)\?(?:[^#]*&)?id=([A-Za-z0-9_-]{10,100})(?:&|$)/i,
+  );
+  const fileId =
+    (driveFileMatch && driveFileMatch[1]) ||
+    (driveIdMatch && driveIdMatch[1]) ||
+    "";
+
+  return fileId
+    ? "https://drive.google.com/thumbnail?id=" + fileId + "&sz=w800"
+    : "";
 }
 
 function sanitizeStaffDepartments_(department, isLeadership) {
@@ -546,6 +772,53 @@ function parseTime_(value) {
   };
 }
 
+function parseDailyActivities_(value) {
+  const text = sanitizePublicText_(value, 500);
+
+  if (!text) {
+    return [];
+  }
+
+  const timePattern =
+    /(\d{1,2}(?::\d{2})?\s*(?:AM|PM))\s*[:\-–—]\s*/gi;
+  const matches = [];
+  let match;
+
+  while ((match = timePattern.exec(text)) !== null) {
+    matches.push({
+      index: match.index,
+      contentIndex: timePattern.lastIndex,
+      time: match[1],
+    });
+  }
+
+  return matches
+    .map(function (activityMatch, index) {
+      const nextMatch = matches[index + 1];
+      const title = sanitizePublicText_(
+        text
+          .slice(
+            activityMatch.contentIndex,
+            nextMatch ? nextMatch.index : text.length,
+          )
+          .replace(/^[\s:–—-]+|[\s:–—-]+$/g, ""),
+        180,
+      );
+      const time = parseTime_(activityMatch.time);
+
+      return time && title
+        ? {
+            time: time.display,
+            title: title,
+          }
+        : null;
+    })
+    .filter(function (activity) {
+      return activity !== null;
+    })
+    .slice(0, 6);
+}
+
 function sanitizePublicText_(value, maximumLength) {
   if (typeof value !== "string") {
     return "";
@@ -555,5 +828,24 @@ function sanitizePublicText_(value, maximumLength) {
     .replace(/[\u0000-\u001F\u007F]/g, " ")
     .replace(/\s+/g, " ")
     .trim()
+    .slice(0, maximumLength);
+}
+
+function sanitizePublicMultilineText_(value, maximumLength) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value
+    .replace(/\r\n?/g, "\n")
+    .replace(/[\u0000-\u0009\u000B-\u001F\u007F]/g, " ")
+    .split("\n")
+    .map(function (line) {
+      return line.replace(/[ \t]+/g, " ").trim();
+    })
+    .filter(function (line) {
+      return line.length > 0;
+    })
+    .join("\n")
     .slice(0, maximumLength);
 }

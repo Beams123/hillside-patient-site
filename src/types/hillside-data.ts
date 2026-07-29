@@ -1,4 +1,10 @@
 export const programCodes = ["CSS", "ATS"] as const;
+export const staffDirectoryGroups = [
+  "Leadership",
+  "Counselors",
+  "Case Managers",
+  "Staff",
+] as const;
 export const weekDays = [
   "Monday",
   "Tuesday",
@@ -10,6 +16,7 @@ export const weekDays = [
 ] as const;
 
 export type ProgramCode = (typeof programCodes)[number];
+export type StaffDirectoryGroup = (typeof staffDirectoryGroups)[number];
 export type WeekDay = (typeof weekDays)[number];
 
 export type ScheduleGroup = {
@@ -20,10 +27,17 @@ export type ScheduleGroup = {
   location: string;
 };
 
+export type ScheduleActivity = {
+  time: string;
+  timeValue: string;
+  title: string;
+};
+
 export type ScheduleDay = {
   day: WeekDay;
   date: string;
   groups: ScheduleGroup[];
+  activities: ScheduleActivity[];
 };
 
 export type WeeklyProgramSchedule = {
@@ -48,6 +62,10 @@ export type StaffMember = {
   title: string;
   departments: string[];
   bio: string;
+  directoryGroup: StaffDirectoryGroup;
+  displayOrder: number;
+  email: string;
+  portraitUrl: string;
 };
 
 export type HillsidePublicData = {

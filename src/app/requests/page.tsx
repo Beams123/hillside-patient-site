@@ -8,24 +8,28 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+import { AmbientHillsideSign } from "@/components/ambient-hillside-sign";
 import { RequestCategoryCard } from "@/components/request-category-card";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { requestCategories } from "@/data/requests";
+import { getPatientRequestMode } from "@/lib/patient-requests";
 
 export const metadata: Metadata = {
-  title: "Request Hub Preview | Hillside Detox",
+  title: "Patient Request Hub | Hillside Detox",
   description:
-    "Preview proposed patient-request categories without submitting personal or clinical information.",
+    "Open Hillside’s approved patient-request workflows.",
 };
 
 const safeguards = [
-  "No form fields",
-  "No request submission",
-  "No personal or clinical information stored",
+  "Server-side validation",
+  "Separate restricted workbooks",
+  "Server-only destination secrets",
 ] as const;
 
 export default function RequestsPage() {
+  const patientRequestMode = getPatientRequestMode();
+
   return (
     <div id="top" className="min-h-screen overflow-x-clip bg-background">
       <a
@@ -40,25 +44,22 @@ export default function RequestsPage() {
       <main id="main-content" tabIndex={-1}>
         <section
           aria-labelledby="requests-page-heading"
-          className="relative isolate overflow-hidden border-b border-brand-gold/15"
+          className="relative isolate overflow-hidden"
         >
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_86%_14%,rgba(210,176,103,0.12),transparent_30%),radial-gradient(circle_at_10%_90%,rgba(210,176,103,0.06),transparent_34%)]"
-          />
+          <AmbientHillsideSign />
           <div className="mx-auto w-full max-w-7xl px-5 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
             <Link
-              href="/"
+              href="/master-schedule"
               className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-gold transition-colors hover:text-brand-gold-light"
             >
               <ArrowLeft className="size-4" aria-hidden="true" />
-              Back to today
+              Back to master schedule
             </Link>
 
-            <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.42fr)] lg:items-end">
+            <div className="mt-8 sm:max-w-[52%]">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-gold">
-                  Read-only prototype
+                  Private request workflows
                 </p>
                 <h1
                   id="requests-page-heading"
@@ -67,13 +68,12 @@ export default function RequestsPage() {
                   Patient Request Hub
                 </h1>
                 <p className="mt-6 max-w-2xl text-pretty text-lg leading-8 text-brand-muted">
-                  Preview how common requests could be organized after Hillside
-                  approves the categories, privacy safeguards, and secure
-                  delivery system.
+                  Open a request form, review the information, and submit it
+                  for management review.
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-brand-gold/25 bg-brand-gold/[0.07] p-5 sm:p-6">
+              <div className="mt-8 rounded-2xl border border-brand-gold/25 bg-brand-gold/[0.07] p-5 sm:p-6">
                 <div className="flex items-start gap-3">
                   <ShieldCheck
                     className="mt-0.5 size-6 shrink-0 text-brand-gold"
@@ -82,11 +82,18 @@ export default function RequestsPage() {
                   />
                   <div>
                     <h2 className="font-semibold text-brand-cream">
-                      Nothing is sent from this page
+                      {patientRequestMode === "live"
+                        ? "Private submission is active"
+                        : patientRequestMode === "test"
+                          ? "Synthetic testing is active"
+                          : "Online submission is not active yet"}
                     </h2>
                     <p className="mt-2 text-sm leading-6 text-brand-muted">
-                      This prototype is intentionally display-only. To request
-                      help now, speak directly with a staff member.
+                      {patientRequestMode === "live"
+                        ? "Grievances, package requests, and visitor requests are validated before being recorded in their restricted management workbooks."
+                        : patientRequestMode === "test"
+                          ? "Development submissions reach the local validation route but are not sent to Google Sheets or retained."
+                          : "Continue using the current paper process until the private workbooks, reviewer access, and retention policies are configured."}
                     </p>
                   </div>
                 </div>
@@ -102,18 +109,19 @@ export default function RequestsPage() {
           <div className="mx-auto w-full max-w-7xl px-5 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
             <div className="max-w-3xl">
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-gold">
-                Proposed organization
+                Request categories
               </p>
               <h2
                 id="category-heading"
                 className="mt-4 text-balance text-4xl font-semibold tracking-[-0.04em] text-brand-cream sm:text-5xl"
               >
-                Draft request categories
+                Choose a request
               </h2>
               <p className="mt-5 max-w-2xl leading-7 text-brand-muted">
-                These are the initial Hillside request types identified for the
-                prototype. The four forms remain inactive until their secure
-                workflows are approved.
+                Grievance, package, and visitor requests use the private
+                management workflow. The nicotine-order process remains a
+                planning draft because this site will not collect payment-card
+                or bank information.
               </p>
             </div>
 
@@ -129,18 +137,22 @@ export default function RequestsPage() {
           <div className="mx-auto grid w-full max-w-7xl gap-8 px-5 py-16 sm:px-8 sm:py-20 lg:grid-cols-[minmax(0,0.75fr)_minmax(20rem,0.45fr)] lg:px-12">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-gold">
-                Privacy checkpoint
+                {patientRequestMode === "live"
+                  ? "Private management routing"
+                  : "Privacy checkpoint"}
               </p>
               <h2
                 id="safeguards-heading"
                 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-brand-cream"
               >
-                Decide the secure workflow before activation
+                {patientRequestMode === "live"
+                  ? "Connected and ready for requests"
+                  : "Decide the secure workflow before activation"}
               </h2>
               <p className="mt-4 max-w-2xl leading-7 text-brand-muted">
-                Hillside still needs to approve which requests belong online,
-                what information is necessary, who receives it, and which
-                compliant system handles delivery and retention.
+                {patientRequestMode === "live"
+                  ? "Grievance, package, and visitor submissions are validated by the website and recorded in separate private management workbooks. The forms can be submitted from any internet connection."
+                  : "Each workbook must remain restricted to the management roles that need it. Hillside still needs to approve the records retention schedule before live launch. The patient forms themselves will be reachable from any internet connection."}
               </p>
 
               <ul className="mt-7 grid gap-3 sm:grid-cols-3">
@@ -160,7 +172,7 @@ export default function RequestsPage() {
             </div>
 
             <aside
-              aria-label="Future request workflow"
+              aria-label="Private request workflow"
               className="rounded-2xl border border-white/[0.09] bg-brand-panel p-6 sm:p-7"
             >
               <div className="flex items-center gap-3">
@@ -172,7 +184,7 @@ export default function RequestsPage() {
                   />
                 </span>
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-gold">
-                  Future workflow
+                  Private workflow
                 </p>
               </div>
               <ol className="mt-6 space-y-5 text-sm leading-6 text-brand-muted">
@@ -186,13 +198,17 @@ export default function RequestsPage() {
                 </li>
                 <li className="flex gap-3">
                   <span className="font-semibold text-brand-gold">03</span>
-                  An approved system securely delivers the request to the right
-                  role.
+                  The server validates the request and records it in the
+                  restricted workbook assigned to the right management role.
                 </li>
               </ol>
               <div className="mt-7 flex items-center gap-2 border-t border-white/[0.08] pt-5 text-xs font-semibold uppercase tracking-[0.14em] text-brand-muted">
                 <ClipboardList className="size-4" aria-hidden="true" />
-                No submission system connected
+                {patientRequestMode === "live"
+                  ? "Private workbooks connected"
+                  : patientRequestMode === "test"
+                    ? "Synthetic test mode"
+                    : "Production submission disabled"}
               </div>
             </aside>
           </div>

@@ -3,13 +3,24 @@
 import { useMemo, useState } from "react";
 
 import { StaffCard } from "@/components/staff-card";
-import type { StaffMember } from "@/types/hillside-data";
+import {
+  staffDirectoryGroups,
+  type StaffMember,
+} from "@/types/hillside-data";
 
 const allStaffFilter = "All staff";
 
 type StaffDirectoryProps = {
   staff: StaffMember[];
 };
+
+function isLeadRole(member: StaffMember) {
+  return (
+    (member.directoryGroup === "Counselors" ||
+      member.directoryGroup === "Case Managers") &&
+    /\blead\b/i.test(member.title)
+  );
+}
 
 export function StaffDirectory({ staff }: StaffDirectoryProps) {
   const departments = useMemo(
@@ -29,8 +40,25 @@ export function StaffDirectory({ staff }: StaffDirectoryProps) {
             selectedDepartment === allStaffFilter ||
             member.departments.includes(selectedDepartment),
         )
-        .toSorted((first, second) => first.name.localeCompare(second.name)),
+        .toSorted(
+          (first, second) =>
+            Number(isLeadRole(second)) - Number(isLeadRole(first)) ||
+            first.displayOrder - second.displayOrder ||
+            first.name.localeCompare(second.name),
+        ),
     [selectedDepartment, staff],
+  );
+  const staffSections = useMemo(
+    () =>
+      staffDirectoryGroups
+        .map((group) => ({
+          group,
+          members: displayedStaff.filter(
+            (member) => member.directoryGroup === group,
+          ),
+        }))
+        .filter((section) => section.members.length > 0),
+    [displayedStaff],
   );
   const resultDescription =
     selectedDepartment === allStaffFilter
@@ -85,11 +113,35 @@ export function StaffDirectory({ staff }: StaffDirectoryProps) {
 
       <div
         id="staff-results"
-        className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        className="mt-6 space-y-10"
       >
-        {displayedStaff.map((member) => (
-          <StaffCard key={member.slug} member={member} />
-        ))}
+        {staffSections.map((section) => {
+          const headingId = `staff-group-${section.group
+            .toLowerCase()
+            .replace(/\s+/g, "-")}`;
+
+          return (
+            <section key={section.group} aria-labelledby={headingId}>
+              <div className="flex items-end justify-between gap-4 border-b border-white/[0.08] pb-4">
+                <h3
+                  id={headingId}
+                  className="text-2xl font-semibold tracking-tight text-brand-cream"
+                >
+                  {section.group}
+                </h3>
+                <p className="text-sm text-brand-muted">
+                  {section.members.length}{" "}
+                  {section.members.length === 1 ? "person" : "people"}
+                </p>
+              </div>
+              <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {section.members.map((member) => (
+                  <StaffCard key={member.slug} member={member} />
+                ))}
+              </div>
+            </section>
+          );
+        })}
       </div>
     </>
   );

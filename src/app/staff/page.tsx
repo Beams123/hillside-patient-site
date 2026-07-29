@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, ShieldCheck, UsersRound } from "lucide-react";
 
+import { AmbientHillsideSign } from "@/components/ambient-hillside-sign";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { StaffDirectory } from "@/components/staff-directory";
@@ -31,37 +32,36 @@ export default async function StaffPage() {
       <main id="main-content" tabIndex={-1}>
         <section
           aria-labelledby="staff-heading"
-          className="relative isolate overflow-hidden border-b border-brand-gold/15"
+          className="relative isolate overflow-hidden"
         >
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_86%_14%,rgba(210,176,103,0.12),transparent_30%)]"
-          />
+          <AmbientHillsideSign />
           <div className="mx-auto w-full max-w-7xl px-5 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
             <Link
-              href="/"
+              href="/master-schedule"
               className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-gold transition-colors hover:text-brand-gold-light"
             >
               <ArrowLeft className="size-4" aria-hidden="true" />
-              Back to today
+              Back to master schedule
             </Link>
-            <p className="mt-8 text-sm font-semibold uppercase tracking-[0.24em] text-brand-gold">
-              People at Hillside
-            </p>
-            <h1
-              id="staff-heading"
-              className="mt-4 max-w-4xl text-balance text-5xl font-semibold leading-[1.02] tracking-[-0.05em] text-brand-cream sm:text-6xl"
-            >
-              Staff directory
-            </h1>
-            <p className="mt-6 max-w-2xl text-pretty text-lg leading-8 text-brand-muted">
-              Find approved staff names, roles, and biographies.
-            </p>
+            <div className="sm:max-w-[52%]">
+              <p className="mt-8 text-sm font-semibold uppercase tracking-[0.24em] text-brand-gold">
+                People at Hillside
+              </p>
+              <h1
+                id="staff-heading"
+                className="mt-4 text-balance text-5xl font-semibold leading-[1.02] tracking-[-0.05em] text-brand-cream sm:text-6xl"
+              >
+                Staff directory
+              </h1>
+              <p className="mt-6 text-pretty text-lg leading-8 text-brand-muted">
+                Find approved staff names, roles, and biographies.
+              </p>
 
-            <p className="mt-8 inline-flex items-center gap-2 rounded-full border border-brand-gold/20 bg-brand-gold/[0.06] px-4 py-2 text-sm text-brand-gold">
-              <ShieldCheck className="size-4" aria-hidden="true" />
-              Approved public information only
-            </p>
+              <p className="mt-8 inline-flex items-center gap-2 rounded-full border border-brand-gold/20 bg-brand-gold/[0.06] px-4 py-2 text-sm text-brand-gold">
+                <ShieldCheck className="size-4" aria-hidden="true" />
+                Approved public information only
+              </p>
+            </div>
           </div>
         </section>
 

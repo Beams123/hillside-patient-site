@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import {
   ArrowLeft,
   ClipboardPenLine,
@@ -7,20 +8,26 @@ import {
   UtensilsCrossed,
 } from "lucide-react";
 
+import { AlternativeMealRequestForm } from "@/components/alternative-meal-request-form";
+import { AmbientHillsideSign } from "@/components/ambient-hillside-sign";
 import { MenuDayCard } from "@/components/menu-day-card";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { getHillsidePublicData } from "@/lib/hillside-data";
+import { getMealOrderMode } from "@/lib/meal-orders";
+import { orderWeekSundayFirst } from "@/lib/week-order";
 
 export const metadata: Metadata = {
-  title: "Weekly Menu | Hillside Detox",
-  description: "View the weekly patient menu at Hillside Detox.",
+  title: "Meals & Alternatives | Hillside Detox",
+  description:
+    "View the weekly patient menu and alternative-meal request area.",
 };
 
 export default async function MenuPage() {
   const dataResult = await getHillsidePublicData();
   const hasMenu =
     dataResult.status === "available" && dataResult.data.menu.length > 0;
+  const mealOrderMode = getMealOrderMode();
 
   return (
     <div id="top" className="min-h-screen overflow-x-clip bg-background">
@@ -36,40 +43,39 @@ export default async function MenuPage() {
       <main id="main-content" tabIndex={-1}>
         <section
           aria-labelledby="menu-heading"
-          className="relative isolate overflow-hidden border-b border-brand-gold/15"
+          className="relative isolate overflow-hidden"
         >
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_86%_14%,rgba(210,176,103,0.12),transparent_30%)]"
-          />
+          <AmbientHillsideSign />
           <div className="mx-auto w-full max-w-7xl px-5 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
             <Link
-              href="/"
+              href="/master-schedule"
               className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-gold transition-colors hover:text-brand-gold-light"
             >
               <ArrowLeft className="size-4" aria-hidden="true" />
-              Back to today
+              Back to master schedule
             </Link>
-            <p className="mt-8 text-sm font-semibold uppercase tracking-[0.24em] text-brand-gold">
-              Patient dining
-            </p>
-            <h1
-              id="menu-heading"
-              className="mt-4 max-w-4xl text-balance text-5xl font-semibold leading-[1.02] tracking-[-0.05em] text-brand-cream sm:text-6xl"
-            >
-              Weekly menu
-            </h1>
-            <p className="mt-6 max-w-2xl text-pretty text-lg leading-8 text-brand-muted">
-              A simple day-by-day view of breakfast, lunch, dinner, and the
-              soup of the day.
-            </p>
-
-            {hasMenu ? (
-              <p className="mt-8 inline-flex items-center gap-2 rounded-full border border-brand-gold/20 bg-brand-gold/[0.06] px-4 py-2 text-sm text-brand-gold">
-                <ShieldCheck className="size-4" aria-hidden="true" />
-                {dataResult.data.weekLabel}
+            <div className="sm:max-w-[52%]">
+              <p className="mt-8 text-sm font-semibold uppercase tracking-[0.24em] text-brand-gold">
+                Patient dining
               </p>
-            ) : null}
+              <h1
+                id="menu-heading"
+                className="mt-4 text-balance text-5xl font-semibold leading-[1.02] tracking-[-0.05em] text-brand-cream sm:text-6xl"
+              >
+                Meals & alternatives
+              </h1>
+              <p className="mt-6 text-pretty text-lg leading-8 text-brand-muted">
+                A simple day-by-day view of breakfast, lunch, dinner, and the
+                soup of the day.
+              </p>
+
+              {hasMenu ? (
+                <p className="mt-8 inline-flex min-h-11 items-center gap-2 rounded-full border border-brand-gold/20 bg-brand-gold/[0.06] px-4 py-2 text-sm text-brand-gold">
+                  <ShieldCheck className="size-4" aria-hidden="true" />
+                  {dataResult.data.weekLabel}
+                </p>
+              ) : null}
+            </div>
           </div>
         </section>
 
@@ -96,15 +102,17 @@ export default async function MenuPage() {
                 </div>
 
                 <div className="mx-auto max-w-4xl space-y-4">
-                  {dataResult.data.menu.map((menuDay) => (
-                    <MenuDayCard
-                      key={menuDay.date}
-                      menuDay={menuDay}
-                      isToday={
-                        menuDay.date === dataResult.data.scheduleDate
-                      }
-                    />
-                  ))}
+                  {orderWeekSundayFirst(dataResult.data.menu).map(
+                    (menuDay) => (
+                      <MenuDayCard
+                        key={menuDay.date}
+                        menuDay={menuDay}
+                        isToday={
+                          menuDay.date === dataResult.data.scheduleDate
+                        }
+                      />
+                    ),
+                  )}
                 </div>
               </>
             ) : (
@@ -142,12 +150,13 @@ export default async function MenuPage() {
                 Request an alternative meal
               </h2>
               <p className="mt-4 max-w-2xl leading-7 text-brand-muted">
-                Patients currently request a meal from the alternative menu by
-                writing the request on the paper request sheet.
+                Choose an eligible lunch or dinner from Master Schedule. Its
+                program, date, serving time, and request deadline will be
+                attached automatically.
               </p>
               <Link
                 href="/requests"
-                className="mt-7 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-gold transition-colors hover:text-brand-gold-light"
+                className="mt-6 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-gold transition-colors hover:text-brand-gold-light"
               >
                 <ArrowLeft className="size-4" aria-hidden="true" />
                 Return to the Request Hub
@@ -168,22 +177,40 @@ export default async function MenuPage() {
                 </span>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-gold">
-                    Current process
+                    Request protection
                   </p>
                   <h3 className="mt-2 text-xl font-semibold tracking-tight text-brand-cream">
-                    Use the paper request sheet
+                    Meal-specific requests
                   </h3>
                 </div>
               </div>
               <p className="mt-5 text-sm leading-6 text-brand-muted">
-                Online meal requests are not active. This page provides the
-                current guidance but does not collect or submit a meal choice.
+                Requests must begin from a lunch or dinner in Master Schedule.
+                {mealOrderMode === "live"
+                  ? " The selected meal and submission time are verified by the server before the request reaches the private order sheet."
+                  : mealOrderMode === "test"
+                    ? " Local development is using synthetic receipts and is not connected to the private order sheet."
+                    : " Online submission remains disabled until the private order destination and server-only connection are fully configured."}
               </p>
               <div className="mt-6 flex items-center gap-2 border-t border-white/[0.08] pt-5 text-xs font-semibold uppercase tracking-[0.14em] text-brand-muted">
                 <ClipboardPenLine className="size-4" aria-hidden="true" />
-                No online form connected
+                {mealOrderMode === "live"
+                  ? "Private workflow active"
+                  : mealOrderMode === "test"
+                    ? "Safe local test mode"
+                    : "Paper process remains active"}
               </div>
             </aside>
+          </div>
+
+          <div className="mx-auto w-full max-w-5xl px-5 pb-16 sm:px-8 sm:pb-20 lg:px-12 lg:pb-24">
+            <Suspense
+              fallback={
+                <div className="min-h-64 rounded-2xl border border-brand-gold/25 bg-brand-panel" />
+              }
+            >
+              <AlternativeMealRequestForm mode={mealOrderMode} />
+            </Suspense>
           </div>
         </section>
       </main>

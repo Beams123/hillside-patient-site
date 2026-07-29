@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Today at Hillside | Hillside Detox",
+  title: "Hillside Detox Patient Information",
   description:
-    "A patient-information preview for weekly schedules and facility resources at Hillside Detox.",
+    "Public group schedules, menus, staff information, requests, and patient resources for Hillside Detox.",
 };
 
 export default function RootLayout({

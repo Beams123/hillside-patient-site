@@ -3,6 +3,8 @@ import {
   ChevronDown,
   Clock3,
   MapPin,
+  Sparkles,
+  UsersRound,
 } from "lucide-react";
 
 import type {
@@ -30,6 +32,24 @@ export function ScheduleDayCard({
   const visibleDate = dateFormatter.format(
     new Date(`${scheduleDay.date}T12:00:00Z`),
   );
+  const timeline = [
+    ...scheduleDay.groups.map((group, index) => ({
+      ...group,
+      key: `group-${group.timeValue}-${index}`,
+      type: "group" as const,
+    })),
+    ...scheduleDay.activities.map((activity, index) => ({
+      ...activity,
+      key: `activity-${activity.timeValue}-${index}`,
+      type: "activity" as const,
+    })),
+  ].sort((first, second) => {
+    const timeOrder = first.timeValue.localeCompare(second.timeValue);
+
+    return timeOrder !== 0
+      ? timeOrder
+      : first.key.localeCompare(second.key);
+  });
 
   return (
     <details
@@ -64,45 +84,71 @@ export function ScheduleDayCard({
         </span>
       </summary>
 
-      {scheduleDay.groups.length > 0 ? (
+      {timeline.length > 0 ? (
         <ol className="divide-y divide-white/[0.08] border-t border-white/[0.08]">
-          {scheduleDay.groups.map((group, index) => (
+          {timeline.map((item) => (
             <li
-              key={`${programCode}-${scheduleDay.date}-${group.timeValue}-${index}`}
+              key={`${programCode}-${scheduleDay.date}-${item.key}`}
               className="grid gap-3 px-5 py-5 sm:grid-cols-[7rem_1fr] sm:gap-5 sm:px-6"
             >
               <time
-                dateTime={group.timeValue}
+                dateTime={item.timeValue}
                 className="flex items-center gap-2 text-sm font-semibold text-brand-gold"
               >
                 <Clock3 className="size-4" aria-hidden="true" />
-                {group.time}
+                {item.time}
               </time>
-              <div>
-                <p className="font-medium text-brand-cream">{group.topic}</p>
-                {group.location ? (
-                  <p className="mt-1.5 flex items-center gap-1.5 text-sm font-medium text-brand-gold">
-                    <MapPin
+              {item.type === "group" ? (
+                <div>
+                  <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-brand-muted">
+                    <UsersRound
                       className="size-3.5 shrink-0"
-                      strokeWidth={1.75}
                       aria-hidden="true"
                     />
-                    {group.location}
+                    Group
                   </p>
-                ) : null}
-                {group.facilitator ? (
-                  <p className="mt-1 text-sm text-brand-muted">
-                    Facilitator:{" "}
-                    <span className="font-semibold">{group.facilitator}</span>
+                  <p className="mt-1.5 font-medium text-brand-cream">
+                    {item.topic}
                   </p>
-                ) : null}
-              </div>
+                  {item.location ? (
+                    <p className="mt-1.5 flex items-center gap-1.5 text-sm font-medium text-brand-gold">
+                      <MapPin
+                        className="size-3.5 shrink-0"
+                        strokeWidth={1.75}
+                        aria-hidden="true"
+                      />
+                      {item.location}
+                    </p>
+                  ) : null}
+                  {item.facilitator ? (
+                    <p className="mt-1 text-sm text-brand-muted">
+                      Facilitator:{" "}
+                      <span className="font-semibold">
+                        {item.facilitator}
+                      </span>
+                    </p>
+                  ) : null}
+                </div>
+              ) : (
+                <div>
+                  <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-brand-muted">
+                    <Sparkles
+                      className="size-3.5 shrink-0"
+                      aria-hidden="true"
+                    />
+                    Activity
+                  </p>
+                  <p className="mt-1.5 font-medium text-brand-cream">
+                    {item.title}
+                  </p>
+                </div>
+              )}
             </li>
           ))}
         </ol>
       ) : (
         <p className="border-t border-white/[0.08] px-5 py-8 text-sm leading-6 text-brand-muted sm:px-6">
-          No groups are listed for this day.
+          No groups or activities are listed for this day.
         </p>
       )}
     </details>
