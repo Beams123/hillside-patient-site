@@ -30,8 +30,8 @@ export function MenuDayCard({ menuDay, isToday }: MenuDayCardProps) {
       open={isToday}
       className={
         isToday
-          ? "group overflow-hidden rounded-2xl border border-brand-gold/45 bg-brand-panel shadow-[0_18px_55px_rgba(0,0,0,0.22)]"
-          : "group overflow-hidden rounded-2xl border border-white/[0.09] bg-brand-panel"
+          ? "gold-glow-card group overflow-hidden rounded-2xl border border-brand-gold/45 bg-brand-panel shadow-[0_18px_55px_rgba(0,0,0,0.22)]"
+          : "gold-glow-card group overflow-hidden rounded-2xl border border-white/[0.09] bg-brand-panel"
       }
     >
       <summary className="flex min-h-24 cursor-pointer list-none items-center justify-between gap-4 px-5 py-5 select-none transition-colors hover:bg-white/[0.025] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand-gold [&::-webkit-details-marker]:hidden sm:px-6">

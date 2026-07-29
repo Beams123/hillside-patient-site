@@ -29,7 +29,7 @@ export function StaffCard({ member }: StaffCardProps) {
     <Link
       href={`/staff/${member.slug}`}
       aria-label={`View ${member.name}'s profile`}
-      className="group flex min-h-64 flex-col rounded-2xl border border-white/[0.09] bg-brand-panel p-6 transition-colors hover:border-brand-gold/40 sm:p-7"
+      className="gold-glow-card group flex min-h-64 flex-col rounded-2xl border border-white/[0.09] bg-brand-panel p-6 sm:p-7"
     >
       <div
         aria-hidden="true"

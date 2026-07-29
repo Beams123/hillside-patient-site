@@ -49,13 +49,13 @@ export function ResourceCard({ resource }: ResourceCardProps) {
   return resource.href ? (
     <Link
       href={resource.href}
-      className="group min-h-56 rounded-2xl border border-white/[0.09] bg-brand-panel p-6 transition-colors hover:border-brand-gold/40 sm:p-7"
+      className="gold-glow-card group min-h-56 rounded-2xl border border-white/[0.09] bg-brand-panel p-6 sm:p-7"
       aria-label={`${resource.title}: ${resource.description}`}
     >
       {content}
     </Link>
   ) : (
-    <article className="group min-h-56 rounded-2xl border border-white/[0.09] bg-brand-panel p-6 sm:p-7">
+    <article className="gold-glow-card group min-h-56 rounded-2xl border border-white/[0.09] bg-brand-panel p-6 sm:p-7">
       {content}
     </article>
   );

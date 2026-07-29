@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { navigationItems } from "@/data/homepage";
@@ -29,21 +30,24 @@ export function SiteHeader() {
               />
             ))}
 
-            <span className="hillside-coin-face hillside-coin-front absolute inset-0 flex items-center justify-center rounded-full border border-[#f1dc9a] bg-[radial-gradient(circle_at_32%_25%,#f3dda1_0%,#d6b665_35%,#a77d2f_76%,#6f4d16_100%)] shadow-[inset_0_0_0_2px_rgba(76,50,12,0.28),inset_0_0_12px_rgba(255,244,196,0.45),0_2px_8px_rgba(0,0,0,0.35)]">
-              <span className="pointer-events-none absolute inset-1 rounded-full border border-brand-ink/35" />
-              <span className="pointer-events-none absolute left-[22%] top-[13%] h-[18%] w-[36%] -rotate-[20deg] rounded-full bg-white/25 blur-[1px]" />
-              <span className="hillside-coin-engraving pointer-events-none absolute inset-[0.38rem]" />
+            <span className="hillside-coin-face hillside-coin-front absolute inset-0 overflow-hidden rounded-full bg-[#9d7441] shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+              <Image
+                src="/hillside-coin-front.png"
+                alt=""
+                fill
+                sizes="44px"
+                className="hillside-coin-image pointer-events-none scale-[1.03] object-cover"
+              />
             </span>
 
-            <span className="hillside-coin-face hillside-coin-back absolute inset-0 flex items-center justify-center rounded-full border border-[#f1dc9a] bg-[radial-gradient(circle_at_35%_28%,#f0d58d_0%,#cfaa55_43%,#9b6f24_78%,#684513_100%)] shadow-[inset_0_0_0_2px_rgba(76,50,12,0.3),inset_0_0_12px_rgba(255,244,196,0.42),0_2px_8px_rgba(0,0,0,0.35)]">
-              <span className="pointer-events-none absolute inset-1 rounded-full border border-brand-ink/35" />
-              <span className="hillside-coin-motto relative flex flex-col items-center justify-center text-center text-[0.32rem] font-black uppercase leading-[1.05] tracking-[0.055em] text-[#62400b]">
-                <span>Progress</span>
-                <span className="my-px text-[0.27rem] tracking-[0.12em]">
-                  not
-                </span>
-                <span>Perfection</span>
-              </span>
+            <span className="hillside-coin-face hillside-coin-back absolute inset-0 overflow-hidden rounded-full bg-[#9d7441] shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+              <Image
+                src="/hillside-coin-back.png"
+                alt=""
+                fill
+                sizes="44px"
+                className="hillside-coin-image pointer-events-none scale-[1.03] object-cover"
+              />
             </span>
           </span>
           <span>

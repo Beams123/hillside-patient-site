@@ -49,7 +49,7 @@ export function ResourceLibraryCard({
     <Link
       href={`/resources/${resource.slug}`}
       aria-label={`Open sample resource: ${resource.title}`}
-      className="group flex min-h-64 flex-col rounded-2xl border border-white/[0.09] bg-brand-panel p-6 transition-colors hover:border-brand-gold/40 sm:p-7"
+      className="gold-glow-card group flex min-h-64 flex-col rounded-2xl border border-white/[0.09] bg-brand-panel p-6 sm:p-7"
     >
       <div className="flex items-start justify-between gap-4">
         <span className="flex size-12 items-center justify-center rounded-xl border border-brand-gold/25 bg-brand-gold/[0.07] text-brand-gold transition-colors group-hover:bg-brand-gold group-hover:text-brand-ink">
