@@ -20,7 +20,8 @@ The bridge in `google-apps-script/` solves both constraints:
 The bridge can return only:
 
 - current schedule date and week label;
-- Monday–Sunday CSS and ATS group time, topic, and facilitator;
+- Monday–Sunday CSS and ATS group time, topic, facilitator, and approved
+  location when a group is split across locations;
 - Monday–Sunday breakfast, lunch, dinner, and soup-of-the-day item lists.
 - checked staff display name, job title, selected departments, and public
   biography, plus a URL-safe profile slug derived from the display name.
@@ -151,6 +152,14 @@ list while continuing to serve the schedule and menu. Run
 `verifyStaffDirectoryAccess` in the Apps Script editor to surface the exact
 staff-workbook permission error without exposing it through the public
 endpoint.
+
+On Friday, the approved schedule uses the CSS 1:00 PM topic/facilitator cell
+pair to describe separate combined-program men’s and women’s groups, while the
+embedded text identifies their actual 1:30 PM time, locations, and
+facilitators. When both cells match that expected structure, the bridge
+publishes two 1:30 PM groups with separate location fields in both the ATS and
+CSS schedules. If either cell does not match, the bridge retains the ordinary
+single-group interpretation rather than guessing.
 
 ## Updating the bridge
 

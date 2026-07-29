@@ -92,7 +92,10 @@ function normalizeScheduleContent(topic: string, facilitator: string) {
   return { topic, facilitator };
 }
 
-function parseScheduleGroup(value: unknown): ScheduleGroup | null {
+function parseScheduleGroup(
+  value: unknown,
+  supportsLocation: boolean,
+): ScheduleGroup | null {
   if (!isRecord(value)) {
     return null;
   }
@@ -100,13 +103,17 @@ function parseScheduleGroup(value: unknown): ScheduleGroup | null {
   const time = readString(value.time, 20);
   const topic = readString(value.topic, 140);
   const facilitator = readString(value.facilitator, 100, true);
+  const location = supportsLocation
+    ? readString(value.location, 80, true)
+    : "";
   const timeValue = time === null ? null : getTimeValue(time);
 
   if (
     time === null ||
     timeValue === null ||
     topic === null ||
-    facilitator === null
+    facilitator === null ||
+    location === null
   ) {
     return null;
   }
@@ -118,15 +125,21 @@ function parseScheduleGroup(value: unknown): ScheduleGroup | null {
     timeValue,
     topic: content.topic,
     facilitator: content.facilitator,
+    location,
   };
 }
 
-function parseScheduleGroups(value: unknown): ScheduleGroup[] | null {
+function parseScheduleGroups(
+  value: unknown,
+  supportsLocation: boolean,
+): ScheduleGroup[] | null {
   if (!Array.isArray(value) || value.length > maximumGroupsPerProgram) {
     return null;
   }
 
-  const groups = value.map(parseScheduleGroup);
+  const groups = value.map((group) =>
+    parseScheduleGroup(group, supportsLocation),
+  );
 
   if (
     !groups.every(
@@ -161,14 +174,17 @@ function getWeekDates(scheduleDate: string) {
   });
 }
 
-function parseScheduleDay(value: unknown): ScheduleDay | null {
+function parseScheduleDay(
+  value: unknown,
+  supportsLocation: boolean,
+): ScheduleDay | null {
   if (!isRecord(value)) {
     return null;
   }
 
   const day = readString(value.day, 9);
   const date = readString(value.date, 10);
-  const groups = parseScheduleGroups(value.groups);
+  const groups = parseScheduleGroups(value.groups, supportsLocation);
 
   if (
     day === null ||
@@ -191,12 +207,15 @@ function parseWeeklyProgramSchedule(
   code: ProgramCode,
   value: unknown,
   scheduleDate: string,
+  supportsLocation: boolean,
 ): WeeklyProgramSchedule | null {
   if (!Array.isArray(value) || value.length !== weekDays.length) {
     return null;
   }
 
-  const days = value.map(parseScheduleDay);
+  const days = value.map((day) =>
+    parseScheduleDay(day, supportsLocation),
+  );
   const expectedWeek = getWeekDates(scheduleDate);
 
   if (
@@ -224,7 +243,7 @@ function parseLegacyProgramSchedule(
   value: unknown,
   scheduleDate: string,
 ): WeeklyProgramSchedule | null {
-  const groups = parseScheduleGroups(value);
+  const groups = parseScheduleGroups(value, false);
   const week = getWeekDates(scheduleDate);
 
   if (groups === null || week.length !== weekDays.length) {
@@ -368,7 +387,8 @@ function parsePublicData(value: unknown): HillsidePublicData | null {
     (value.version !== 1 &&
       value.version !== 2 &&
       value.version !== 3 &&
-      value.version !== 4)
+      value.version !== 4 &&
+      value.version !== 5)
   ) {
     return null;
   }
@@ -381,7 +401,7 @@ function parsePublicData(value: unknown): HillsidePublicData | null {
   const schedulesValue = value.schedules;
   const menuValue = value.menu;
   const staff =
-    feedVersion === 4 ? parseStaff(value.staff) : [];
+    feedVersion >= 4 ? parseStaff(value.staff) : [];
 
   if (
     generatedAt === null ||
@@ -403,6 +423,7 @@ function parsePublicData(value: unknown): HillsidePublicData | null {
           code,
           schedulesValue[code],
           scheduleDate,
+          feedVersion >= 5,
         )
       : parseLegacyProgramSchedule(
           code,

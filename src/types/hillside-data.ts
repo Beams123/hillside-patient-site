@@ -17,6 +17,7 @@ export type ScheduleGroup = {
   timeValue: string;
   topic: string;
   facilitator: string;
+  location: string;
 };
 
 export type ScheduleDay = {

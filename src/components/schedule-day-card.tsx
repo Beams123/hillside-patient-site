@@ -1,4 +1,9 @@
-import { CalendarDays, ChevronDown, Clock3 } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronDown,
+  Clock3,
+  MapPin,
+} from "lucide-react";
 
 import type {
   ProgramCode,
@@ -75,6 +80,16 @@ export function ScheduleDayCard({
               </time>
               <div>
                 <p className="font-medium text-brand-cream">{group.topic}</p>
+                {group.location ? (
+                  <p className="mt-1.5 flex items-center gap-1.5 text-sm font-medium text-brand-gold">
+                    <MapPin
+                      className="size-3.5 shrink-0"
+                      strokeWidth={1.75}
+                      aria-hidden="true"
+                    />
+                    {group.location}
+                  </p>
+                ) : null}
                 {group.facilitator ? (
                   <p className="mt-1 text-sm text-brand-muted">
                     Facilitator:{" "}

@@ -14,7 +14,7 @@ const STAFF_SPREADSHEET_ID =
   "1CpGOnpZda9GMkGfs3iZnmxPMJ9hRR0xfD6hRk5fFi-g";
 const FACILITY_TIME_ZONE = "America/New_York";
 const CACHE_SECONDS = 300;
-const PUBLIC_PAYLOAD_VERSION = 4;
+const PUBLIC_PAYLOAD_VERSION = 5;
 const MENU_ITEMS_RANGE = "D4:K31";
 const MENU_ITEMS_PER_MEAL = 8;
 const MEALS_PER_DAY = 4;
@@ -115,14 +115,14 @@ function countWeeklyGroups_(schedule) {
 
 function getCachedPayload_() {
   const cache = CacheService.getScriptCache();
-  const cached = cache.get("public-payload-v4");
+  const cached = cache.get("public-payload-v5");
 
   if (cached) {
     return JSON.parse(cached);
   }
 
   const payload = buildPayload_();
-  cache.put("public-payload-v4", JSON.stringify(payload), CACHE_SECONDS);
+  cache.put("public-payload-v5", JSON.stringify(payload), CACHE_SECONDS);
   return payload;
 }
 
@@ -144,6 +144,8 @@ function buildPayload_() {
       week,
     );
   });
+
+  applyFridayCombinedProgramGroups_(schedules);
 
   return {
     ok: true,
@@ -217,6 +219,7 @@ function readWeeklyProgramSchedule_(sheetName, config, week) {
           time: time.display,
           topic: content.topic,
           facilitator: content.facilitator,
+          location: "",
         });
       }
 
@@ -232,6 +235,120 @@ function readWeeklyProgramSchedule_(sheetName, config, week) {
       groups: groups,
     };
   });
+}
+
+function applyFridayCombinedProgramGroups_(schedules) {
+  const cssFriday = getScheduleDay_(schedules.CSS, "Friday");
+  const atsFriday = getScheduleDay_(schedules.ATS, "Friday");
+
+  if (!cssFriday || !atsFriday) {
+    return;
+  }
+
+  const cssCombinedIndex = cssFriday.groups.findIndex(function (group) {
+    return Boolean(
+      parseCombinedProgramGroupLine_(group.topic, group.time) &&
+        parseCombinedProgramGroupLine_(group.facilitator, group.time),
+    );
+  });
+
+  if (cssCombinedIndex < 0) {
+    return;
+  }
+
+  const cssSourceGroup = cssFriday.groups[cssCombinedIndex];
+  const firstGroup = parseCombinedProgramGroupLine_(
+    cssSourceGroup.topic,
+    cssSourceGroup.time,
+  );
+  const secondGroup = parseCombinedProgramGroupLine_(
+    cssSourceGroup.facilitator,
+    cssSourceGroup.time,
+  );
+
+  if (
+    !firstGroup ||
+    !secondGroup ||
+    firstGroup.time !== secondGroup.time
+  ) {
+    return;
+  }
+
+  const sharedGroups = [firstGroup, secondGroup];
+  cssFriday.groups.splice(cssCombinedIndex, 1, ...sharedGroups);
+
+  const atsCombinedIndex = atsFriday.groups.findIndex(function (group) {
+    return (
+      group.time === firstGroup.time &&
+      isCombinedProgramGroupSummary_(group.topic)
+    );
+  });
+
+  if (atsCombinedIndex >= 0) {
+    atsFriday.groups.splice(
+      atsCombinedIndex,
+      1,
+      ...sharedGroups.map(function (group) {
+        return {
+          time: group.time,
+          topic: group.topic,
+          facilitator: group.facilitator,
+          location: group.location,
+        };
+      }),
+    );
+  }
+}
+
+function getScheduleDay_(schedule, dayName) {
+  return (schedule || []).find(function (day) {
+    return day.day === dayName;
+  });
+}
+
+function parseCombinedProgramGroupLine_(value, fallbackTime) {
+  const text = sanitizePublicText_(value, 140);
+  const match = text.match(
+    /^(Men'?s|Women'?s)\s*,?\s*group\s+(?:(?:\(location\s+([^)]+)\))|(.+?))\s*(?:-\s*)?\(?(\d{1,2}:\d{2})(?:\s*(AM|PM))?\)?\s+(.+)$/i,
+  );
+
+  if (!match) {
+    return null;
+  }
+
+  const fallbackPeriodMatch = fallbackTime.match(/\b(AM|PM)$/i);
+  const period =
+    (match[5] || (fallbackPeriodMatch && fallbackPeriodMatch[1]) || "")
+      .toUpperCase();
+  const parsedTime = parseTime_(match[4] + " " + period);
+  const location = sanitizePublicText_(match[2] || match[3], 80);
+  const facilitator = sanitizePublicText_(match[6], 100);
+
+  if (!parsedTime || !location || !facilitator) {
+    return null;
+  }
+
+  return {
+    time: parsedTime.display,
+    topic: /^men/i.test(match[1]) ? "Men's group" : "Women's group",
+    facilitator: facilitator,
+    location: location
+      .split(" ")
+      .map(function (word) {
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      })
+      .join(" "),
+  };
+}
+
+function isCombinedProgramGroupSummary_(topic) {
+  const text = sanitizePublicText_(topic, 140);
+
+  return (
+    /\bgroup/i.test(text) &&
+    (/\bmen\b.*\bwomen\b/i.test(text) ||
+      /\bwomen\b.*\bmen\b/i.test(text))
+  );
 }
 
 function normalizeScheduleContent_(topic, facilitator) {

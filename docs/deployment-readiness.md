@@ -43,8 +43,8 @@ Before public deployment:
 - Keep the schedule, menu, and staff Google Sheets private.
 - Verify the Apps Script `/exec` response in a private browser window.
 - Confirm it contains only schedule date/week, Monday–Sunday CSS and ATS
-  times/topics/facilitators, weekly meal-item lists, and checked staff
-  slug/name/title/departments/bio fields.
+  times/topics/facilitators/approved locations, weekly meal-item lists, and
+  checked staff slug/name/title/departments/bio fields.
 - Confirm unchecked staff rows and the `Publish` checkbox are absent from the
   public response.
 - Review every published biography for patient information, confidential work,
