@@ -106,7 +106,9 @@ Share edit access only with specific staff approved for the private kitchen
 workflow. They should use the `Weekly Menu` tab and edit only the yellow
 Item 1–Item 8 cells. Each row is one meal, and each food goes in its own
 ordinary cell. No keyboard shortcut or separator is required. Dates update
-automatically. Blank meals display as “Not posted” on the site.
+automatically. On the first five-minute publishing run after a new Sunday
+begins, only the yellow food-entry cells are cleared for the new week. Blank
+meals display as “Not posted” on the site.
 
 The separate [Hillside Website Menu feed](https://docs.google.com/spreadsheets/d/1qUxUFHaCBmZP5ygjMNX49Q1Kxjbx2QjU3MUQj5KSQdA/)
 is now a technical destination only. Staff should not open or edit it. The

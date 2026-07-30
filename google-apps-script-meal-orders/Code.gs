@@ -18,12 +18,15 @@ const README_SHEET_NAME = "Read Me";
 const WEBSITE_MENU_FEED_SPREADSHEET_ID =
   "1qUxUFHaCBmZP5ygjMNX49Q1Kxjbx2QjU3MUQj5KSQdA";
 const WEBSITE_MENU_FEED_SHEET_NAME = "Menu Items";
-const WEEKLY_MENU_RANGE = "A1:K31";
-const WEEKLY_MENU_HEADER_ROWS = 3;
+const WEEKLY_MENU_RANGE = "A1:K30";
+const WEEKLY_MENU_HEADER_ROWS = 2;
 const WEEKLY_MENU_ROWS_PER_DAY = 4;
 const WEEKLY_MENU_COLUMN_COUNT = 11;
+const KITCHEN_MENU_FIRST_DATA_ROW = 3;
+const KITCHEN_MENU_ITEM_RANGE = "D3:K30";
 const WORKBOOK_ID_PROPERTY = "MEAL_ORDER_SPREADSHEET_ID";
 const SHARED_SECRET_PROPERTY = "MEAL_ORDER_SHARED_SECRET";
+const MENU_WEEK_START_PROPERTY = "MEAL_ORDER_MENU_WEEK_START";
 const MAXIMUM_SPECIAL_REQUEST_LENGTH = 200;
 const MAXIMUM_FIRST_NAME_LENGTH = 40;
 const DUPLICATE_CACHE_SECONDS = 120;
@@ -270,6 +273,7 @@ function setupMealOrderSystem() {
   configureOrdersSheet_(workbook);
   configurePrintoutSheet_(workbook);
   configureKitchenMenuSheet_(workbook);
+  rollKitchenMenuWeekIfNeeded_(workbook);
   configureReadMeSheet_(workbook);
   ensurePurgeTrigger_();
   migrateLegacyMenuRefreshTriggers_();
@@ -338,6 +342,7 @@ function verifyMealOrderSystem() {
   }
 
   configureKitchenMenuSheet_(workbook);
+  rollKitchenMenuWeekIfNeeded_(workbook);
   publishKitchenMenu_(workbook);
   console.log("Meal-order system verified: " + workbook.getUrl());
 
@@ -404,6 +409,8 @@ function publishKitchenMenu() {
   }
 
   const workbook = SpreadsheetApp.openById(workbookId);
+  configureKitchenMenuSheet_(workbook);
+  rollKitchenMenuWeekIfNeeded_(workbook);
   publishKitchenMenu_(workbook);
 
   console.log("Kitchen menu published to the website feed.");
@@ -524,36 +531,23 @@ function configureKitchenMenuSheet_(workbook) {
 
   const expectedWeeklyRows =
     KITCHEN_MENU_DAY_NAMES.length * WEEKLY_MENU_ROWS_PER_DAY;
-  const dayValues = [];
-  const dateFormulas = [];
-  const mealValues = [];
+  const hasCompactLayout =
+    sheet.getRange("A2").getDisplayValue() === "Day" &&
+    sheet.getRange("C2").getDisplayValue() === "Meal";
 
-  for (let rowIndex = 0; rowIndex < expectedWeeklyRows; rowIndex += 1) {
-    const dayIndex = Math.floor(rowIndex / WEEKLY_MENU_ROWS_PER_DAY);
-    const mealIndex = rowIndex % WEEKLY_MENU_ROWS_PER_DAY;
-
-    dayValues.push([KITCHEN_MENU_DAY_NAMES[dayIndex]]);
-    dateFormulas.push([
-      rowIndex === 0
-        ? "=TODAY()-WEEKDAY(TODAY(),1)+1"
-        : "=$B$4+" + dayIndex,
-    ]);
-    mealValues.push([KITCHEN_MENU_MEAL_NAMES[mealIndex]]);
+  if (hasCompactLayout) {
+    return;
   }
 
-  sheet.getRange(1, 1, 2, WEEKLY_MENU_COLUMN_COUNT).breakApart();
+  const existingItems = sheet
+    .getRange("D4:K31")
+    .getValues()
+    .slice(0, expectedWeeklyRows);
+
+  sheet.getRange("A1:K31").breakApart().clear();
   sheet.getRange("A1").setValue("KITCHEN WEEKLY MENU");
   sheet
-    .getRange("D1")
-    .setValue("EDIT THIS MENU — WEBSITE PUBLISHES AUTOMATICALLY");
-  sheet.getRange("A2").setValue("EDITABLE SOURCE");
-  sheet
-    .getRange("D2")
-    .setValue(
-      "Enter one food in each yellow cell. Changes reach the website feed within five minutes.",
-    );
-  sheet
-    .getRange("A3:K3")
+    .getRange("A2:K2")
     .setValues([
       [
         "Day",
@@ -569,9 +563,32 @@ function configureKitchenMenuSheet_(workbook) {
         "Item 8",
       ],
     ]);
-  sheet.getRange(4, 1, expectedWeeklyRows, 1).setValues(dayValues);
-  sheet.getRange(4, 2, expectedWeeklyRows, 1).setFormulas(dateFormulas);
-  sheet.getRange(4, 3, expectedWeeklyRows, 1).setValues(mealValues);
+  sheet.getRange(KITCHEN_MENU_ITEM_RANGE).setValues(existingItems);
+
+  KITCHEN_MENU_DAY_NAMES.forEach(function (dayName, dayIndex) {
+    const firstRow =
+      KITCHEN_MENU_FIRST_DATA_ROW +
+      dayIndex * WEEKLY_MENU_ROWS_PER_DAY;
+
+    sheet.getRange(firstRow, 1, WEEKLY_MENU_ROWS_PER_DAY, 1).merge();
+    sheet.getRange(firstRow, 2, WEEKLY_MENU_ROWS_PER_DAY, 1).merge();
+    sheet.getRange(firstRow, 1).setValue(dayName);
+    sheet
+      .getRange(firstRow, 2)
+      .setFormula(
+        dayIndex === 0
+          ? "=TODAY()-WEEKDAY(TODAY(),1)+1"
+          : "=$B$3+" + dayIndex,
+      );
+    sheet
+      .getRange(firstRow, 3, WEEKLY_MENU_ROWS_PER_DAY, 1)
+      .setValues(
+        KITCHEN_MENU_MEAL_NAMES.map(function (mealName) {
+          return [mealName];
+        }),
+      );
+  });
+
   sheet
     .getRange(
       1,
@@ -584,8 +601,6 @@ function configureKitchenMenuSheet_(workbook) {
     .setWrap(true);
   sheet.getRange("A1:C1").merge();
   sheet.getRange("D1:K1").merge();
-  sheet.getRange("A2:C2").merge();
-  sheet.getRange("D2:K2").merge();
   sheet
     .getRange("A1:K1")
     .setBackground("#171612")
@@ -595,29 +610,23 @@ function configureKitchenMenuSheet_(workbook) {
     .setHorizontalAlignment("center");
   sheet
     .getRange("A2:K2")
-    .setBackground("#f5efe2")
-    .setFontColor("#28261f")
-    .setFontWeight("bold")
-    .setHorizontalAlignment("center");
-  sheet
-    .getRange("A3:K3")
     .setBackground("#d2b067")
     .setFontColor("#0a0a09")
     .setFontWeight("bold")
     .setHorizontalAlignment("center");
   sheet
-    .getRange("A4:C31")
+    .getRange("A3:C30")
     .setBackground("#f5efe2")
     .setFontColor("#28261f")
     .setFontWeight("bold")
     .setHorizontalAlignment("center");
   sheet
-    .getRange("D4:K31")
+    .getRange(KITCHEN_MENU_ITEM_RANGE)
     .setBackground("#fff3c4")
     .setFontColor("#28261f")
     .setHorizontalAlignment("left");
-  sheet.getRange("B4:B31").setNumberFormat("mmm d");
-  sheet.setFrozenRows(3);
+  sheet.getRange("B3:B30").setNumberFormat("mmm d");
+  sheet.setFrozenRows(2);
   sheet.setFrozenColumns(3);
   sheet.setHiddenGridlines(true);
   sheet.setColumnWidth(1, 110);
@@ -628,9 +637,47 @@ function configureKitchenMenuSheet_(workbook) {
     sheet.setColumnWidth(column, 150);
   }
 
-  sheet.setRowHeight(1, 34);
-  sheet.setRowHeight(2, 44);
-  sheet.setRowHeights(3, 29, 34);
+  sheet.setRowHeight(1, 42);
+  sheet.setRowHeight(2, 34);
+  sheet.setRowHeights(3, expectedWeeklyRows, 36);
+}
+
+function rollKitchenMenuWeekIfNeeded_(workbook) {
+  const properties = PropertiesService.getScriptProperties();
+  const currentWeekStart = Utilities.formatDate(
+    getCurrentFacilitySunday_(),
+    FACILITY_TIME_ZONE,
+    "yyyy-MM-dd",
+  );
+  const storedWeekStart = properties.getProperty(
+    MENU_WEEK_START_PROPERTY,
+  );
+
+  if (!storedWeekStart) {
+    properties.setProperty(MENU_WEEK_START_PROPERTY, currentWeekStart);
+    return false;
+  }
+
+  if (storedWeekStart === currentWeekStart) {
+    return false;
+  }
+
+  const sheet = workbook.getSheetByName(KITCHEN_MENU_SHEET_NAME);
+
+  if (!sheet) {
+    throw new Error("The editable kitchen menu tab is not available.");
+  }
+
+  sheet.getRange(KITCHEN_MENU_ITEM_RANGE).clearContent();
+  properties.setProperty(MENU_WEEK_START_PROPERTY, currentWeekStart);
+  SpreadsheetApp.flush();
+  console.log(
+    "Weekly Menu rolled forward to " +
+      currentWeekStart +
+      "; prior menu items were cleared.",
+  );
+
+  return true;
 }
 
 function publishKitchenMenu_(workbook) {
@@ -758,7 +805,7 @@ function configureReadMeSheet_(workbook) {
   sheet.clear();
   sheet.getRange("A1").setValue("Private Hillside meal-order workbook");
   sheet.getRange("A1").setFontSize(18).setFontWeight("bold");
-  sheet.getRange("A3:A13").setValues([
+  sheet.getRange("A3:A14").setValues([
     [
       "This workbook contains identifiable patient meal requests. Share it only with staff approved for this workflow.",
     ],
@@ -767,6 +814,9 @@ function configureReadMeSheet_(workbook) {
     ],
     [
       "Weekly Menu publishes only its approved menu cells to the website feed every five minutes. It never publishes patient order rows.",
+    ],
+    [
+      "At the start of each Sunday-to-Saturday week, Weekly Menu updates its dates and clears only the yellow food-entry cells automatically.",
     ],
     [
       "RS staff: open the Kitchen Printout tab and print the current sheet at lunch or dinner.",
@@ -794,8 +844,8 @@ function configureReadMeSheet_(workbook) {
     ],
   ]);
   sheet.setColumnWidth(1, 850);
-  sheet.getRange("A1:A13").setWrap(true).setVerticalAlignment("top");
-  sheet.getRange("A3:A13").setFontSize(11);
+  sheet.getRange("A1:A14").setWrap(true).setVerticalAlignment("top");
+  sheet.getRange("A3:A14").setFontSize(11);
 }
 
 function ensurePurgeTrigger_() {

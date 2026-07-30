@@ -119,7 +119,12 @@ Its `Weekly Menu` tab:
 
 - is the editable source of truth for the menu used by the website;
 - lists Sunday first;
+- groups each day and date beside its four meal rows to reduce repetition;
 - accepts one food per yellow Item cell;
+- updates the displayed dates automatically for each new Sunday-to-Saturday
+  week;
+- clears only the yellow food-entry cells when a new week begins, during the
+  first automatic five-minute publishing run after Sunday midnight Eastern;
 - publishes only its menu cells to the website feed automatically every five
   minutes after the updated setup function has been run;
 - is the only menu workbook kitchen staff need to open.
@@ -149,10 +154,12 @@ requested serving time.
 2. Save the script.
 3. Run `setupMealOrderSystem` once. This removes the old trigger that copied
    the website menu into the kitchen workbook, preserves the existing yellow
-   menu-item cells, and installs the new outward publishing trigger.
+   menu-item cells, changes `Weekly Menu` to the compact grouped layout, records
+   the current week without clearing it, and installs the new outward
+   publishing trigger.
 4. Run `verifyMealOrderSystem`.
-5. Open the private workbook and confirm `Weekly Menu` says `EDITABLE SOURCE`
-   and `EDIT THIS MENU — WEBSITE PUBLISHES AUTOMATICALLY`.
+5. Open the private workbook and confirm `Weekly Menu` has one gold header row,
+   Sunday appears first, and each day/date spans four meal rows.
 6. Make one synthetic menu edit in an unused yellow cell, run
    `publishKitchenMenu`, and confirm the same value appears in the website
    preview within five minutes. Remove the synthetic value afterward.
