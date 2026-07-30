@@ -13,23 +13,26 @@ export function StaffCard({ member }: StaffCardProps) {
     <Link
       href={`/staff/${member.slug}`}
       aria-label={`View ${member.name}'s profile`}
-      className="gold-glow-card group flex min-h-72 flex-col rounded-2xl border border-white/[0.09] bg-brand-panel p-6 sm:p-7"
+      className="gold-glow-card group flex min-h-60 min-w-0 flex-col rounded-xl border border-white/[0.09] bg-brand-panel p-4 sm:min-h-72 sm:rounded-2xl sm:p-7"
     >
       <StaffPortrait
         member={member}
-        className="size-20 text-base"
-        sizes="80px"
+        className="size-16 text-sm sm:size-20 sm:text-base"
+        sizes="(max-width: 639px) 64px, 80px"
       />
 
-      <div className="mt-auto pt-8">
-        <h3 className="text-2xl font-semibold tracking-tight text-brand-cream">
+      <div className="mt-auto min-w-0 pt-5 sm:pt-8">
+        <h3 className="text-base font-semibold leading-snug tracking-tight text-brand-cream sm:text-2xl">
           {member.name}
         </h3>
-        <p className="mt-2 leading-7 text-brand-muted">{member.title}</p>
-        <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-brand-gold">
-          View profile
+        <p className="mt-2 text-sm leading-5 text-brand-muted sm:text-base sm:leading-7">
+          {member.title}
+        </p>
+        <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-gold sm:mt-6 sm:gap-2 sm:text-sm">
+          <span className="sm:hidden">Profile</span>
+          <span className="hidden sm:inline">View profile</span>
           <ArrowUpRight
-            className="size-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+            className="size-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 sm:size-4"
             aria-hidden="true"
           />
         </span>

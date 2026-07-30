@@ -212,7 +212,7 @@ export function GrievanceRequestForm({
               </div>
             </fieldset>
 
-            <div className="mt-8 grid gap-6 sm:grid-cols-2">
+            <div className="mt-8 grid max-w-2xl gap-6">
               <label className="text-sm font-semibold text-brand-cream">
                 Staff members involved
                 <span className="ml-2 font-normal text-brand-muted">
@@ -230,8 +230,8 @@ export function GrievanceRequestForm({
                 />
               </label>
 
-              <div className="grid grid-cols-2 gap-4">
-                <label className="text-sm font-semibold text-brand-cream">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="min-w-0 text-sm font-semibold text-brand-cream">
                   Date
                   <span className="ml-2 font-normal text-brand-muted">
                     Optional
@@ -245,7 +245,7 @@ export function GrievanceRequestForm({
                     className={`${privateRequestInputClassName} [color-scheme:dark]`}
                   />
                 </label>
-                <label className="text-sm font-semibold text-brand-cream">
+                <label className="min-w-0 text-sm font-semibold text-brand-cream">
                   Time
                   <span className="ml-2 font-normal text-brand-muted">
                     Optional

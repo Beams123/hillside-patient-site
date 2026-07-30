@@ -11,7 +11,7 @@ import type { ReactNode } from "react";
 import type { PatientRequestMode } from "@/data/patient-requests";
 
 export const privateRequestInputClassName =
-  "mt-2 min-h-12 w-full rounded-xl border border-white/[0.12] bg-background/70 px-4 py-3 text-base text-brand-cream outline-none transition-colors placeholder:text-brand-muted/60 focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 disabled:cursor-not-allowed disabled:opacity-50";
+  "mt-2 min-h-12 min-w-0 w-full rounded-xl border border-white/[0.12] bg-background/70 px-4 py-3 text-base text-brand-cream outline-none transition-colors placeholder:text-brand-muted/60 focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 disabled:cursor-not-allowed disabled:opacity-50";
 
 const submittedAtFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",

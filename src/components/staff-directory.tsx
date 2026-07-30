@@ -134,7 +134,7 @@ export function StaffDirectory({ staff }: StaffDirectoryProps) {
                   {section.members.length === 1 ? "person" : "people"}
                 </p>
               </div>
-              <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
                 {section.members.map((member) => (
                   <StaffCard key={member.slug} member={member} />
                 ))}
