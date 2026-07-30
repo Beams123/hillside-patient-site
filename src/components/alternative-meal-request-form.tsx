@@ -362,8 +362,8 @@ export function AlternativeMealRequestForm({
             Choose a specific lunch or dinner first
           </p>
           <p className="mt-2 text-sm leading-6 text-brand-muted">
-            Requests must begin from the corresponding meal in Master
-            Schedule so its program, date, serving time, and deadline are
+            Requests must begin from the corresponding meal in the schedule
+            so its program, date, serving time, and deadline are
             attached correctly.
           </p>
           <Link
@@ -371,7 +371,7 @@ export function AlternativeMealRequestForm({
             className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl border border-brand-gold/30 px-4 py-2 text-sm font-semibold text-brand-gold transition-colors hover:bg-brand-gold/[0.07]"
           >
             <ArrowLeft className="size-4" aria-hidden="true" />
-            Return to Master Schedule
+            Return to Schedule
           </Link>
         </div>
       ) : null}
@@ -400,7 +400,7 @@ export function AlternativeMealRequestForm({
               ))}
             </dl>
             <p className="mt-4 text-sm leading-6 text-brand-muted">
-              {visibleTargetDate}. This information came from Master Schedule
+              {visibleTargetDate}. This information came from the schedule
               and cannot be changed inside the request.
             </p>
           </div>

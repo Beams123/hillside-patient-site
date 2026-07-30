@@ -38,7 +38,7 @@ export default function ResourcesPage() {
               className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-gold transition-colors hover:text-brand-gold-light"
             >
               <ArrowLeft className="size-4" aria-hidden="true" />
-              Back to master schedule
+              Back to schedule
             </Link>
             <div className="sm:max-w-[52%]">
               <p className="mt-8 text-sm font-semibold uppercase tracking-[0.24em] text-brand-gold">

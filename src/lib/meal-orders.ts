@@ -238,7 +238,7 @@ export async function validateMealOrder(
       ok: false,
       status: 400,
       message:
-        "Return to Master Schedule and choose a specific lunch or dinner.",
+        "Return to the Schedule and choose a specific lunch or dinner.",
     };
   }
 
@@ -301,7 +301,7 @@ export async function validateMealOrder(
       ok: false,
       status: 400,
       message:
-        "That meal is not in the current approved schedule. Return to Master Schedule and choose it again.",
+        "That meal is not in the current approved schedule. Return to the Schedule and choose it again.",
     };
   }
 

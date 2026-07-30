@@ -7,7 +7,7 @@ import { SiteHeader } from "@/components/site-header";
 import { getHillsidePublicData } from "@/lib/hillside-data";
 
 export const metadata: Metadata = {
-  title: "Master Schedule | Hillside Detox",
+  title: "Schedule | Hillside Detox",
   description:
     "View Hillside groups, meals, and daily activities in one filterable schedule.",
 };
@@ -44,7 +44,7 @@ export default async function MasterSchedulePage() {
                 id="master-schedule-heading"
                 className="mt-4 text-balance text-5xl font-semibold tracking-[-0.05em] text-brand-cream sm:text-6xl"
               >
-                Master schedule
+                Schedule
               </h1>
               <p className="mt-6 max-w-xl text-sm leading-6 text-brand-muted">
                 {isScheduleAvailable
@@ -66,7 +66,7 @@ export default async function MasterSchedulePage() {
                     Schedule connection
                   </p>
                   <h2 className="mt-3 text-3xl font-semibold tracking-tight text-brand-cream">
-                    The master schedule is not available yet
+                    The schedule is not available yet
                   </h2>
                   <p className="mt-4 max-w-2xl leading-7 text-brand-muted">
                     The read-only public feed still needs its one-time

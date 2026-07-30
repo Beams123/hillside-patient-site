@@ -288,7 +288,6 @@ function MasterScheduleDay({
                           date: scheduleDay.date,
                           meal: item.label.toLowerCase(),
                         },
-                        hash: "alternative-meal-request",
                       }}
                       className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-full border border-brand-gold/25 bg-brand-gold/[0.06] px-3.5 py-2 text-xs font-semibold text-brand-gold transition-colors hover:border-brand-gold/45 hover:bg-brand-gold/[0.11] hover:text-brand-gold-light"
                     >
@@ -380,7 +379,7 @@ export function MasterSchedule({
     <div className="mx-auto max-w-4xl">
       <div
         role="tablist"
-        aria-label="Master schedule program"
+        aria-label="Schedule program"
         className="grid grid-cols-2 rounded-2xl border border-white/[0.09] bg-background/50 p-1.5"
       >
         {orderedSchedules.map((schedule, index) => {

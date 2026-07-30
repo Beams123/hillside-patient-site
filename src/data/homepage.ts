@@ -15,8 +15,8 @@ export type ResourcePreview = {
 
 export const navigationItems = [
   {
-    label: "Master Schedule",
-    mobileLabel: "Master",
+    label: "Schedule",
+    mobileLabel: "Schedule",
     href: "/master-schedule",
   },
   { label: "Staff", href: "/staff" },
@@ -27,11 +27,11 @@ export const navigationItems = [
 export const resourcePreviews: ResourcePreview[] = [
   {
     id: "weekly-menu",
-    title: "Weekly menu",
+    title: "Schedule",
     description:
-      "See breakfast, lunch, dinner, and soup-of-the-day information.",
+      "See groups, activities, meals, and soup-of-the-day information.",
     status: "Available",
-    href: "/menu",
+    href: "/master-schedule",
     icon: "menu",
   },
   {
