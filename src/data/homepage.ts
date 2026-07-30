@@ -1,0 +1,77 @@
+export type ResourcePreview = {
+  id: string;
+  title: string;
+  description: string;
+  status: "Available" | "Preview" | "Planned";
+  href?: string;
+  icon:
+    | "menu"
+    | "directory"
+    | "forms"
+    | "appointments"
+    | "facility"
+    | "resources";
+};
+
+export const navigationItems = [
+  {
+    label: "Schedule",
+    mobileLabel: "Schedule",
+    href: "/master-schedule",
+  },
+  { label: "Staff", href: "/staff" },
+  { label: "Requests", href: "/requests" },
+  { label: "Resources", href: "/resources" },
+] as const;
+
+export const resourcePreviews: ResourcePreview[] = [
+  {
+    id: "weekly-menu",
+    title: "Schedule",
+    description:
+      "See groups, activities, meals, and soup-of-the-day information.",
+    status: "Available",
+    href: "/master-schedule",
+    icon: "menu",
+  },
+  {
+    id: "staff-directory",
+    title: "Staff directory",
+    description: "Find approved staff names, roles, and biographies.",
+    status: "Available",
+    href: "/staff",
+    icon: "directory",
+  },
+  {
+    id: "request-forms",
+    title: "Request forms",
+    description:
+      "Preview draft request categories before a secure workflow is approved.",
+    status: "Preview",
+    href: "/requests",
+    icon: "forms",
+  },
+  {
+    id: "appointments",
+    title: "Appointments",
+    description: "Review general appointment guidance and what to bring.",
+    status: "Planned",
+    icon: "appointments",
+  },
+  {
+    id: "facility-guide",
+    title: "Facility guide",
+    description: "Find shared spaces, daily expectations, and useful contacts.",
+    status: "Planned",
+    icon: "facility",
+  },
+  {
+    id: "patient-resources",
+    title: "Resource library",
+    description:
+      "Try the sample resource-library experience while approved content is gathered.",
+    status: "Preview",
+    href: "/resources",
+    icon: "resources",
+  },
+];

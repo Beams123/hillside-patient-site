@@ -1,0 +1,89 @@
+# Public deployment readiness
+
+The site is not cleared for public deployment yet.
+
+## Temporary no-PHI management preview
+
+For an internal management demonstration only, a server host may set
+`HILLSIDE_DEMO_MODE=true`. In this mode, grievance, package, visitor, and
+alternative-meal forms run their normal website validation and return
+synthetic receipts, but never forward or retain submissions.
+
+- Use synthetic names and scenarios only.
+- Do not configure private request URLs or shared secrets.
+- Keep the preview access-limited.
+- Set only the sanitized public `HILLSIDE_DATA_FEED_URL` if approved schedule,
+  menu, activity, and staff content should appear.
+- Remove `HILLSIDE_DEMO_MODE` before any patient-facing release.
+
+## Dependency blocker
+
+As of July 29, 2026, the installed Next.js 16.2.12 dependencies include:
+
+- `postcss@8.4.31`, which is affected by the current CSS-stringification,
+  source-map file-read, and path-traversal advisories;
+- `sharp@0.34.5`, while the current libvips advisory is patched in
+  `sharp@0.35.0`.
+
+`npm audit --omit=dev` reports three high-severity findings. Its proposed
+`npm audit fix --force` would replace Next.js 16.2.12 with Next.js 9.3.3. That
+is a destructive downgrade and must not be run.
+
+The MVP does not process user-supplied CSS or image uploads, which reduces
+exposure to the described attack paths. It does not make the dependency state
+acceptable for a public launch.
+
+Before public deployment:
+
+1. Upgrade to a stable Next.js release that includes compatible patched
+   PostCSS and Sharp dependencies.
+2. Run `npm audit --omit=dev` and confirm these findings are resolved without a
+   forced downgrade or unsupported package override.
+3. Run `npm run lint` and `npm run build`.
+4. Re-test the schedule, menu, and staff bridge with unexpected extra JSON
+   fields and confirm the site renders only its approved data-transfer objects.
+
+Primary advisories:
+
+- <https://github.com/advisories/GHSA-qx2v-qp2m-jg93>
+- <https://github.com/advisories/GHSA-6g55-p6wh-862q>
+- <https://github.com/advisories/GHSA-r28c-9q8g-f849>
+- <https://github.com/advisories/GHSA-f88m-g3jw-g9cj>
+
+## Data and privacy checklist
+
+Before public deployment:
+
+- Keep the schedule, menu, and staff Google Sheets private.
+- Verify the Apps Script `/exec` response in a private browser window.
+- Confirm it contains only schedule date/week, Sunday–Saturday CSS and ATS
+  group times/topics/facilitators/approved locations, daily-activity
+  times/titles, weekly meal-item lists, and checked staff
+  slug/name/title/departments/bio/group/order/approved-email/
+  allowlisted-portrait fields.
+- Confirm unchecked staff rows and the `Publish` checkbox are absent from the
+  public response.
+- Review every published biography for patient information, confidential work,
+  personal contact details, and unapproved claims before checking `Publish`.
+- Confirm every public work email and portrait has staff/leadership approval,
+  and that portraits contain no patients or confidential background details.
+- Reassess the facilitator field if the schedule workbook ever begins using
+  those cells for anyone other than staff members supervising groups.
+- Configure `HILLSIDE_DATA_FEED_URL` as a server-only environment variable.
+- Keep every request form disabled until its privacy, retention,
+  access-control, and incident-response architecture has been reviewed.
+- For alternative-meal orders, complete every step in
+  `docs/alternative-meal-orders.md`. In particular, verify the private
+  workbook permissions, hosting-provider BAA/approval, shared-secret
+  destination and unauthenticated `/exec` JSON health response, 2-hour cutoff,
+  30-day deletion trigger, accepted
+  internet-accessible submission risk, and paper downtime fallback before
+  enabling production submissions.
+- For grievance, package, and visitor requests, complete every step in
+  `docs/private-patient-requests.md`. Verify that the three workbooks remain
+  separately Restricted, reviewer access is role-appropriate, the
+  hosting-provider approval applies, the shared-secret destination passes
+  its unauthenticated `/exec` JSON health check and synthetic testing,
+  management accepts the internet-accessible submission surface, and an
+  approved retention/disposal rule is implemented for each request type
+  before enabling production submissions.
