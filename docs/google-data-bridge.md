@@ -143,8 +143,8 @@ original six:
 | G | Directory section | Dropdown: `Leadership`, `Counselors`, `Case Managers`, or `Staff` | Creates the labeled sections within each department |
 | H | Display order | Whole number from 0–9999 | Lower numbers appear first within a section |
 | I | Public work email | Text restricted to `@hillsidedetox.com` | Appears on the staff profile |
-| J | Public work phone | Optional U.S. phone number | Appears below the email on the staff profile |
-| K | Portrait Drive link | Google Drive share link | Supplies the portrait on the card and profile |
+| J | Portrait Drive link | Google Drive share link | Supplies the portrait on the card and profile |
+| K | Public work phone | Optional U.S. phone number | Appears below the email on the staff profile |
 
 Use gaps in display order, such as 10, 20, and 30, so a person can be inserted
 later without renumbering everyone. For the Clinical department, assign Kyle

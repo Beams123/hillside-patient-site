@@ -591,8 +591,8 @@ function readStaff_() {
         rowIndex + 1,
       );
       const email = sanitizeStaffEmail_((row || [])[8]);
-      const phone = sanitizeStaffPhone_((row || [])[9]);
-      const portraitUrl = sanitizeStaffPortraitUrl_((row || [])[10]);
+      const portraitUrl = sanitizeStaffPortraitUrl_((row || [])[9]);
+      const phone = sanitizeStaffPhone_((row || [])[10]);
       const slug = createStaffSlug_(name);
 
       if (isPublished && name && title && slug && !publishedSlugs[slug]) {
