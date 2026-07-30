@@ -5,6 +5,7 @@ import { MasterSchedule } from "@/components/master-schedule";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { getHillsidePublicData } from "@/lib/hillside-data";
+import type { HillsidePublicData } from "@/types/hillside-data";
 
 export const metadata: Metadata = {
   title: "Schedule | Hillside Detox",
@@ -12,11 +13,40 @@ export const metadata: Metadata = {
     "View Hillside groups, meals, and daily activities in one filterable schedule.",
 };
 
+const scheduleDateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "long",
+  day: "numeric",
+  timeZone: "UTC",
+});
+
+function getScheduleDateRange(data: HillsidePublicData) {
+  const firstSchedule = data.schedules[0];
+  const firstDate = firstSchedule?.days[0]?.date;
+  const lastDate = firstSchedule?.days.at(-1)?.date;
+
+  if (!firstDate || !lastDate) {
+    return "";
+  }
+
+  const start = new Date(`${firstDate}T12:00:00Z`);
+  const end = new Date(`${lastDate}T12:00:00Z`);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return "";
+  }
+
+  return `${scheduleDateFormatter.format(start)} - ${scheduleDateFormatter.format(end)}`;
+}
+
 export default async function MasterSchedulePage() {
   const dataResult = await getHillsidePublicData();
   const isScheduleAvailable =
     dataResult.status === "available" &&
     dataResult.data.schedules.length > 0;
+  const scheduleDateRange =
+    dataResult.status === "available"
+      ? getScheduleDateRange(dataResult.data)
+      : "";
 
   return (
     <div id="top" className="min-h-screen overflow-x-clip bg-background">
@@ -37,20 +67,17 @@ export default async function MasterSchedulePage() {
           <AmbientHillsideSign />
           <div className="mx-auto w-full max-w-7xl px-5 pb-20 pt-16 sm:px-8 sm:pb-24 sm:pt-20 lg:px-12 lg:pb-28 lg:pt-28">
             <div className="sm:max-w-[52%]">
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-gold">
-                Daily timeline
-              </p>
               <h1
                 id="master-schedule-heading"
-                className="mt-4 text-balance text-5xl font-semibold tracking-[-0.05em] text-brand-cream sm:text-6xl"
+                className="text-balance text-5xl font-semibold tracking-[-0.05em] text-brand-cream sm:text-6xl"
               >
                 Schedule
               </h1>
-              <p className="mt-6 max-w-xl text-sm leading-6 text-brand-muted">
-                {isScheduleAvailable
-                  ? `Showing approved group, meal, and daily activity information for ${dataResult.data.weekLabel}. Choose ATS or CSS, then filter the timeline.`
-                  : "The secure schedule connection is not active yet. No internal workbook content or placeholder details are being shown."}
-              </p>
+              {scheduleDateRange ? (
+                <p className="mt-5 text-sm font-semibold tracking-[0.08em] text-brand-gold">
+                  {scheduleDateRange}
+                </p>
+              ) : null}
             </div>
 
             <div className="mt-20 sm:mt-[18.5rem]">

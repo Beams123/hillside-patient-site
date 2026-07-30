@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, ShieldCheck, UsersRound } from "lucide-react";
+import { ArrowLeft, UsersRound } from "lucide-react";
 
 import { AmbientHillsideSign } from "@/components/ambient-hillside-sign";
 import { SiteFooter } from "@/components/site-footer";
@@ -44,22 +44,14 @@ export default async function StaffPage() {
               Back to schedule
             </Link>
             <div className="sm:max-w-[52%]">
-              <p className="mt-8 text-sm font-semibold uppercase tracking-[0.24em] text-brand-gold">
-                People at Hillside
-              </p>
               <h1
                 id="staff-heading"
-                className="mt-4 text-balance text-5xl font-semibold leading-[1.02] tracking-[-0.05em] text-brand-cream sm:text-6xl"
+                className="mt-8 text-balance text-5xl font-semibold leading-[1.02] tracking-[-0.05em] text-brand-cream sm:text-6xl"
               >
                 Staff directory
               </h1>
-              <p className="mt-6 text-pretty text-lg leading-8 text-brand-muted">
-                Find approved staff names, roles, and biographies.
-              </p>
-
-              <p className="mt-8 inline-flex items-center gap-2 rounded-full border border-brand-gold/20 bg-brand-gold/[0.06] px-4 py-2 text-sm text-brand-gold">
-                <ShieldCheck className="size-4" aria-hidden="true" />
-                Approved public information only
+              <p className="mt-5 text-sm font-semibold uppercase tracking-[0.24em] text-brand-gold">
+                People at Hillside
               </p>
             </div>
           </div>
@@ -69,7 +61,7 @@ export default async function StaffPage() {
           <div className="mx-auto w-full max-w-7xl px-5 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
             {hasStaff ? (
               <>
-                <div className="mb-8 flex flex-col gap-3 border-b border-white/[0.08] pb-7 sm:flex-row sm:items-end sm:justify-between">
+                <div className="mb-8 border-b border-white/[0.08] pb-7">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-gold">
                       Staff
@@ -78,11 +70,6 @@ export default async function StaffPage() {
                       Meet the team
                     </h2>
                   </div>
-                  <p className="max-w-lg text-sm leading-6 text-brand-muted">
-                    Only entries marked for public display in the approved
-                    staff sheet appear here. Choose a department, then select
-                    a card to read that person&apos;s posted biography.
-                  </p>
                 </div>
 
                 <StaffDirectory staff={dataResult.data.staff} />

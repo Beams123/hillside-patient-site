@@ -14,12 +14,12 @@ const STAFF_SPREADSHEET_ID =
   "1CpGOnpZda9GMkGfs3iZnmxPMJ9hRR0xfD6hRk5fFi-g";
 const FACILITY_TIME_ZONE = "America/New_York";
 const CACHE_SECONDS = 300;
-const PUBLIC_PAYLOAD_VERSION = 8;
-const PUBLIC_CACHE_KEY = "public-payload-v8-sunday-first-week";
+const PUBLIC_PAYLOAD_VERSION = 9;
+const PUBLIC_CACHE_KEY = "public-payload-v9-staff-phone";
 const MENU_ITEMS_RANGE = "D4:K31";
 const MENU_ITEMS_PER_MEAL = 8;
 const MEALS_PER_DAY = 4;
-const STAFF_DIRECTORY_RANGE = "A4:J53";
+const STAFF_DIRECTORY_RANGE = "A4:K53";
 const MAXIMUM_STAFF_MEMBERS = 50;
 const MAXIMUM_DEPARTMENTS_PER_STAFF_MEMBER = 2;
 const MAXIMUM_STAFF_BIO_LENGTH = 8000;
@@ -591,7 +591,8 @@ function readStaff_() {
         rowIndex + 1,
       );
       const email = sanitizeStaffEmail_((row || [])[8]);
-      const portraitUrl = sanitizeStaffPortraitUrl_((row || [])[9]);
+      const phone = sanitizeStaffPhone_((row || [])[9]);
+      const portraitUrl = sanitizeStaffPortraitUrl_((row || [])[10]);
       const slug = createStaffSlug_(name);
 
       if (isPublished && name && title && slug && !publishedSlugs[slug]) {
@@ -605,6 +606,7 @@ function readStaff_() {
           directoryGroup: directoryGroup,
           displayOrder: displayOrder,
           email: email,
+          phone: phone,
           portraitUrl: portraitUrl,
         });
       }
@@ -654,6 +656,16 @@ function sanitizeStaffEmail_(value) {
     email,
   )
     ? email
+    : "";
+}
+
+function sanitizeStaffPhone_(value) {
+  const phone = sanitizePublicText_(value, 40);
+
+  return /^(?:\+?1[\s.-]?)?(?:\(\d{3}\)|\d{3})[\s.-]?\d{3}[\s.-]?\d{4}(?:\s*(?:x|ext\.?)\s*\d{1,6})?$/i.test(
+    phone,
+  )
+    ? phone
     : "";
 }
 

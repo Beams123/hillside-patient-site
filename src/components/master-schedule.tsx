@@ -412,7 +412,7 @@ export function MasterSchedule({
 
       <fieldset className="mt-5">
         <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-muted">
-          Show in the timeline
+          Show in timeline
         </legend>
         <div className="mt-3 flex flex-wrap gap-2.5">
           <button

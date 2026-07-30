@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, Mail, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Mail, Phone } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { AmbientHillsideSign } from "@/components/ambient-hillside-sign";
@@ -56,6 +56,10 @@ export default async function StaffProfilePage({
   const biographyParagraphs = member.bio
     ? member.bio.split("\n")
     : ["A public biography has not been posted yet."];
+  const hasContactDetails = Boolean(member.email || member.phone);
+  const phoneHref = member.phone
+    ? `tel:${member.phone.replace(/[^\d+]/g, "")}`
+    : "";
 
   return (
     <div id="top" className="min-h-screen overflow-x-clip bg-background">
@@ -112,7 +116,7 @@ export default async function StaffProfilePage({
           <div className="mx-auto w-full max-w-7xl px-5 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
             <div
               className={
-                member.email
+                hasContactDetails
                   ? "grid max-w-5xl gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start"
                   : "max-w-3xl"
               }
@@ -132,14 +136,9 @@ export default async function StaffProfilePage({
                     <p key={`${member.slug}-bio-${index}`}>{paragraph}</p>
                   ))}
                 </div>
-
-                <p className="mt-10 inline-flex items-center gap-2 rounded-full border border-brand-gold/20 bg-brand-gold/[0.06] px-4 py-2 text-sm text-brand-gold">
-                  <ShieldCheck className="size-4" aria-hidden="true" />
-                  Approved public information only
-                </p>
               </article>
 
-              {member.email ? (
+              {hasContactDetails ? (
                 <aside
                   aria-labelledby="contact-heading"
                   className="rounded-2xl border border-white/[0.09] bg-brand-panel p-6 sm:p-7"
@@ -151,21 +150,31 @@ export default async function StaffProfilePage({
                       aria-hidden="true"
                     />
                   </div>
-                  <p className="mt-6 text-xs font-semibold uppercase tracking-[0.18em] text-brand-gold">
-                    Contact
-                  </p>
                   <h2
                     id="contact-heading"
-                    className="mt-2 text-xl font-semibold tracking-tight text-brand-cream"
+                    className="mt-6 text-xl font-semibold tracking-tight text-brand-cream"
                   >
-                    Public work email
+                    Contact
                   </h2>
-                  <a
-                    href={`mailto:${member.email}`}
-                    className="mt-4 block break-all text-sm font-semibold leading-6 text-brand-gold underline decoration-brand-gold/35 underline-offset-4 transition-colors hover:text-brand-gold-light"
-                  >
-                    {member.email}
-                  </a>
+                  <div className="mt-4 space-y-4">
+                    {member.email ? (
+                      <a
+                        href={`mailto:${member.email}`}
+                        className="block break-all text-sm font-semibold leading-6 text-brand-gold underline decoration-brand-gold/35 underline-offset-4 transition-colors hover:text-brand-gold-light"
+                      >
+                        {member.email}
+                      </a>
+                    ) : null}
+                    {member.phone ? (
+                      <a
+                        href={phoneHref}
+                        className="inline-flex items-center gap-2 text-sm font-semibold leading-6 text-brand-gold underline decoration-brand-gold/35 underline-offset-4 transition-colors hover:text-brand-gold-light"
+                      >
+                        <Phone className="size-4" aria-hidden="true" />
+                        {member.phone}
+                      </a>
+                    ) : null}
+                  </div>
                   <p className="mt-6 border-t border-white/[0.08] pt-5 text-xs leading-5 text-brand-muted">
                     For general communication only. Do not include medical,
                     treatment, or other confidential information in an

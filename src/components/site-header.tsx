@@ -1,13 +1,39 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 import { navigationItems } from "@/data/homepage";
 
 const coinEdgeDepths = [-3, -2, -1, 0, 1, 2, 3];
 
 export function SiteHeader() {
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const updateHeaderBackground = () => {
+      setIsScrolled(window.scrollY > 8);
+    };
+
+    updateHeaderBackground();
+    window.addEventListener("scroll", updateHeaderBackground, {
+      passive: true,
+    });
+
+    return () => {
+      window.removeEventListener("scroll", updateHeaderBackground);
+    };
+  }, []);
+
   return (
-    <header className="sticky top-0 z-50 bg-transparent md:fixed md:inset-x-0">
+    <header
+      className={`sticky top-0 z-50 transition-[background-color,box-shadow,border-color] duration-200 md:fixed md:inset-x-0 ${
+        isScrolled
+          ? "border-b border-white/[0.07] bg-[#090907]/95 shadow-[0_10px_35px_rgba(0,0,0,0.42)] backdrop-blur-xl"
+          : "border-b border-transparent bg-transparent"
+      }`}
+    >
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-6 px-5 sm:px-8 lg:px-12">
         <Link
           href="/master-schedule"
@@ -57,7 +83,7 @@ export function SiteHeader() {
               Hillside
             </span>
             <span className="block text-[0.65rem] uppercase tracking-[0.18em] text-brand-muted">
-              Patient information
+              Detox
             </span>
           </span>
         </Link>
@@ -78,10 +104,7 @@ export function SiteHeader() {
         </nav>
       </div>
 
-      <nav
-        aria-label="Mobile navigation"
-        className="md:hidden"
-      >
+      <nav aria-label="Mobile navigation" className="md:hidden">
         <ul className="grid grid-cols-4">
           {navigationItems.map((item) => (
             <li key={item.href}>

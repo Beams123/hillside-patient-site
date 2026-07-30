@@ -135,7 +135,7 @@ rows and rows without both a name and job title are excluded from the feed.
 The website creates the profile URL from the display name; coworkers do not
 need to manage a technical slug column.
 
-The live workbook includes these four website-control columns after the
+The live workbook includes these five website-control columns after the
 original six:
 
 | Column | Heading | Editor control | Public use |
@@ -143,7 +143,8 @@ original six:
 | G | Directory section | Dropdown: `Leadership`, `Counselors`, `Case Managers`, or `Staff` | Creates the labeled sections within each department |
 | H | Display order | Whole number from 0–9999 | Lower numbers appear first within a section |
 | I | Public work email | Text restricted to `@hillsidedetox.com` | Appears on the staff profile |
-| J | Portrait Drive link | Google Drive share link | Supplies the portrait on the card and profile |
+| J | Public work phone | Optional U.S. phone number | Appears below the email on the staff profile |
+| K | Portrait Drive link | Google Drive share link | Supplies the portrait on the card and profile |
 
 Use gaps in display order, such as 10, 20, and 30, so a person can be inserted
 later without renumbering everyone. For the Clinical department, assign Kyle
@@ -176,9 +177,10 @@ Department names are allowlisted in both the bridge and website parser. Adding
 a new dropdown option therefore requires a matching reviewed code change
 before that category can reach the public site.
 
-Do not add phone numbers, personal email addresses, private schedules, patient
-assignments, or clinical information. Use only a public Hillside work email
-that the staff member and leadership have approved for website display.
+Do not add personal phone numbers, personal email addresses, private schedules,
+patient assignments, or clinical information. Use only a public Hillside work
+email and public work phone that the staff member and leadership have approved
+for website display.
 Biographies and portraits must be approved for public display and must not
 mention or show patients or confidential work. Uncheck `Publish` to remove a
 staff member and profile from the next refreshed feed.
@@ -194,7 +196,7 @@ The bridge reads these ranges and no others:
 | Group Schedules and RS Posts | same two source tabs | CSS Sunday activity cell `N13` from the first tab and Monday–Saturday activity cells `B13`, `D13`, `F13`, `H13`, `J13`, and `L13` from the second tab | Sunday–Saturday CSS activities |
 | Group Schedules and RS Posts | same two source tabs | ATS Sunday activity cell `AD13` from the first tab and Monday–Saturday activity cells `R13`, `T13`, `V13`, `X13`, `Z13`, and `AB13` from the second tab | Sunday–Saturday ATS activities |
 | Hillside Website Menu feed (automatically published from the private kitchen workbook) | `Menu Items` | `D4:K31` | Breakfast, lunch, dinner, and soup-of-the-day items |
-| Hillside Website Staff Directory | `Staff Directory` | `A4:J53` | Publish checkbox, display name, job title, controlled department choice, leadership checkbox, public biography, controlled directory section, display order, approved work email, and portrait Drive link |
+| Hillside Website Staff Directory | `Staff Directory` | `A4:K53` | Publish checkbox, display name, job title, controlled department choice, leadership checkbox, public biography, controlled directory section, display order, approved work email, approved work phone, and portrait Drive link |
 
 For menu rows, the bridge constructs the public day, date, and meal assignment
 itself. It reads only the yellow item cells in columns D–K, so accidental text
@@ -214,12 +216,12 @@ multiple time-prefixed activities. The bridge splits and sanitizes at most six
 entries per program per day; unrelated cells and the row labels are not
 published.
 
-For staff rows, the bridge reads only the ten directory columns, filters for
+For staff rows, the bridge reads only the eleven directory columns, filters for
 the checked `Publish` value, adds `Leadership` to the public department list
 when its checkbox is selected, validates the Hillside email domain, converts an
 approved Drive share link to a narrowly allowlisted portrait URL, and emits
 only the derived slug, name, title, departments, bio, directory section,
-display order, email, and portrait URL. Neither checkbox is returned. The site
+display order, email, phone, and portrait URL. Neither checkbox is returned. The site
 uses departments only to filter the directory; they are not printed on each
 staff card.
 

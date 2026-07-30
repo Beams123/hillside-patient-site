@@ -55,6 +55,8 @@ const displayTimePattern = /^(\d{1,2}):([0-5]\d) (AM|PM)$/;
 const staffSlugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const staffEmailPattern =
   /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@hillsidedetox\.com$/i;
+const staffPhonePattern =
+  /^(?:\+?1[\s.-]?)?(?:\(\d{3}\)|\d{3})[\s.-]?\d{3}[\s.-]?\d{4}(?:\s*(?:x|ext\.?)\s*\d{1,6})?$/i;
 const staffPortraitFileIdPattern = /^[A-Za-z0-9_-]{10,100}$/;
 const coverageFacilitatorPattern =
   /^[A-Za-z][A-Za-z .'-]{0,80}\s*\([^)]*\bcovering\b[^)]*\)$/i;
@@ -550,6 +552,7 @@ function readStaffPortraitUrl(value: unknown): string | null {
 function parseStaffMember(
   value: unknown,
   supportsDirectoryDetails: boolean,
+  supportsPhone: boolean,
   fallbackOrder: number,
 ): StaffMember | null {
   if (!isRecord(value)) {
@@ -571,6 +574,9 @@ function parseStaffMember(
     : fallbackOrder;
   const email = supportsDirectoryDetails
     ? readString(value.email, 120, true)
+    : "";
+  const phone = supportsPhone
+    ? readString(value.phone, 40, true)
     : "";
   const portraitUrl = supportsDirectoryDetails
     ? readStaffPortraitUrl(value.portraitUrl)
@@ -596,6 +602,8 @@ function parseStaffMember(
     displayOrder === null ||
     email === null ||
     (email.length > 0 && !staffEmailPattern.test(email)) ||
+    phone === null ||
+    (phone.length > 0 && !staffPhonePattern.test(phone)) ||
     portraitUrl === null ||
     (supportsDirectoryDetails &&
       (directoryGroup === null ||
@@ -617,6 +625,7 @@ function parseStaffMember(
       : inferStaffDirectoryGroup(title, departments),
     displayOrder,
     email,
+    phone,
     portraitUrl,
   };
 }
@@ -624,13 +633,19 @@ function parseStaffMember(
 function parseStaff(
   value: unknown,
   supportsDirectoryDetails: boolean,
+  supportsPhone: boolean,
 ): StaffMember[] | null {
   if (!Array.isArray(value) || value.length > maximumStaffMembers) {
     return null;
   }
 
   const staff = value.map((member, index) =>
-    parseStaffMember(member, supportsDirectoryDetails, index + 1),
+    parseStaffMember(
+      member,
+      supportsDirectoryDetails,
+      supportsPhone,
+      index + 1,
+    ),
   );
 
   if (!staff.every((member): member is StaffMember => member !== null)) {
@@ -653,7 +668,8 @@ function parsePublicData(value: unknown): HillsidePublicData | null {
       value.version !== 5 &&
       value.version !== 6 &&
       value.version !== 7 &&
-      value.version !== 8)
+      value.version !== 8 &&
+      value.version !== 9)
   ) {
     return null;
   }
@@ -668,7 +684,7 @@ function parsePublicData(value: unknown): HillsidePublicData | null {
   const menuValue = value.menu;
   const staff =
     feedVersion >= 4
-      ? parseStaff(value.staff, feedVersion >= 6)
+      ? parseStaff(value.staff, feedVersion >= 6, feedVersion >= 9)
       : [];
 
   if (

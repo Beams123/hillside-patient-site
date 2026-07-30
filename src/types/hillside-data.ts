@@ -65,6 +65,7 @@ export type StaffMember = {
   directoryGroup: StaffDirectoryGroup;
   displayOrder: number;
   email: string;
+  phone: string;
   portraitUrl: string;
 };
 
