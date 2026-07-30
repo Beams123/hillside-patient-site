@@ -14,8 +14,8 @@ const STAFF_SPREADSHEET_ID =
   "1CpGOnpZda9GMkGfs3iZnmxPMJ9hRR0xfD6hRk5fFi-g";
 const FACILITY_TIME_ZONE = "America/New_York";
 const CACHE_SECONDS = 300;
-const PUBLIC_PAYLOAD_VERSION = 9;
-const PUBLIC_CACHE_KEY = "public-payload-v9-staff-phone";
+const PUBLIC_PAYLOAD_VERSION = 10;
+const PUBLIC_CACHE_KEY = "public-payload-v10-staff-categories";
 const MENU_ITEMS_RANGE = "D4:K31";
 const MENU_ITEMS_PER_MEAL = 8;
 const MEALS_PER_DAY = 4;
@@ -23,9 +23,11 @@ const STAFF_DIRECTORY_RANGE = "A4:K53";
 const MAXIMUM_STAFF_MEMBERS = 50;
 const MAXIMUM_DEPARTMENTS_PER_STAFF_MEMBER = 2;
 const MAXIMUM_STAFF_BIO_LENGTH = 8000;
-const PUBLIC_STAFF_DEPARTMENTS = ["Clinical"];
+const PUBLIC_STAFF_DEPARTMENTS = ["Clinical", "Medical", "Admissions"];
 const PUBLIC_STAFF_DIRECTORY_GROUPS = [
   "Leadership",
+  "Medical",
+  "Admissions",
   "Counselors",
   "Case Managers",
   "Staff",

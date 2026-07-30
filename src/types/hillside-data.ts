@@ -1,6 +1,8 @@
 export const programCodes = ["CSS", "ATS"] as const;
 export const staffDirectoryGroups = [
   "Leadership",
+  "Medical",
+  "Admissions",
   "Counselors",
   "Case Managers",
   "Staff",

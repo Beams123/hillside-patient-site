@@ -27,7 +27,12 @@ const maximumStaffMembers = 50;
 const maximumDepartmentsPerStaffMember = 2;
 const maximumStaffBioLength = 8_000;
 const maximumStaffDisplayOrder = 9_999;
-const publicStaffDepartments = new Set(["Clinical", "Leadership"]);
+const publicStaffDepartments = new Set([
+  "Clinical",
+  "Medical",
+  "Admissions",
+  "Leadership",
+]);
 const publicStaffDirectoryGroups = new Set(staffDirectoryGroups);
 const sundayFirstWeekDays = [
   "Sunday",
@@ -670,7 +675,8 @@ function parsePublicData(value: unknown): HillsidePublicData | null {
       value.version !== 6 &&
       value.version !== 7 &&
       value.version !== 8 &&
-      value.version !== 9)
+      value.version !== 9 &&
+      value.version !== 10)
   ) {
     return null;
   }
