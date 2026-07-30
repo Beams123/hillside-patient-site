@@ -10,7 +10,9 @@ The bridge in `google-apps-script/` solves both constraints:
 2. It never edits the source workbook.
 3. It reads only fixed CSS and ATS group and daily-activity cells from the two
    source tabs needed to assemble the public Sunday–Saturday week.
-4. It reads meal descriptions from the separate Hillside Website Menu sheet.
+4. It reads meal descriptions from a separate, read-only website feed that is
+   automatically published from the private kitchen workbook’s editable
+   `Weekly Menu` tab.
 5. It reads only checked rows from the separate Hillside Website Staff
    Directory sheet.
 6. It returns a new JSON object containing only approved public fields.
@@ -96,18 +98,24 @@ bridge URL; only the Next.js server fetches it.
 
 ## Menu editing
 
-The separate menu workbook is:
+The only menu workbook staff should edit is:
 
-[Hillside Website Menu](https://docs.google.com/spreadsheets/d/1qUxUFHaCBmZP5ygjMNX49Q1Kxjbx2QjU3MUQj5KSQdA/)
+[Hillside Kitchen Menu & Alternative Meal Orders (Private)](https://docs.google.com/spreadsheets/d/1otVd9EV0Y9vwZRD38YnhtCKiUCTtKkwdAmRmWWUyZRw/)
 
-Share edit access only with specific staff who maintain public menu content.
-They should use the `Menu Items` tab and edit only the yellow Item 1–Item 8
-cells. Each row is one meal, and each food goes in its own ordinary cell.
-No keyboard shortcut or separator is required. Dates update automatically.
-Blank meals display as “Not posted” on the site.
+Share edit access only with specific staff approved for the private kitchen
+workflow. They should use the `Weekly Menu` tab and edit only the yellow
+Item 1–Item 8 cells. Each row is one meal, and each food goes in its own
+ordinary cell. No keyboard shortcut or separator is required. Dates update
+automatically. Blank meals display as “Not posted” on the site.
+
+The separate [Hillside Website Menu feed](https://docs.google.com/spreadsheets/d/1qUxUFHaCBmZP5ygjMNX49Q1Kxjbx2QjU3MUQj5KSQdA/)
+is now a technical destination only. Staff should not open or edit it. The
+private meal-order Apps Script publishes the kitchen menu there every five
+minutes, and the public bridge reads only the yellow item cells from that
+sanitized feed.
 
 Never enter patient names, allergies, preferences, diagnoses, medications,
-appointments, or other personal or clinical information in this workbook.
+appointments, or other personal or clinical information in `Weekly Menu`.
 
 ## Staff-directory editing
 
@@ -183,17 +191,17 @@ The bridge reads these ranges and no others:
 | Group Schedules and RS Posts | source tab ending on the public week’s opening Sunday, plus the source tab beginning the following Monday | ATS time cells `Q3`, `Q5`, `Q7`, `Q9` plus Sunday content in `AD` from the first tab and Monday–Saturday content in `R`, `T`, `V`, `X`, `Z`, and `AB` from the second tab | Sunday–Saturday ATS schedule |
 | Group Schedules and RS Posts | same two source tabs | CSS Sunday activity cell `N13` from the first tab and Monday–Saturday activity cells `B13`, `D13`, `F13`, `H13`, `J13`, and `L13` from the second tab | Sunday–Saturday CSS activities |
 | Group Schedules and RS Posts | same two source tabs | ATS Sunday activity cell `AD13` from the first tab and Monday–Saturday activity cells `R13`, `T13`, `V13`, `X13`, `Z13`, and `AB13` from the second tab | Sunday–Saturday ATS activities |
-| Hillside Website Menu | `Menu Items` | `D4:K31` | Breakfast, lunch, dinner, and soup-of-the-day items |
+| Hillside Website Menu feed (automatically published from the private kitchen workbook) | `Menu Items` | `D4:K31` | Breakfast, lunch, dinner, and soup-of-the-day items |
 | Hillside Website Staff Directory | `Staff Directory` | `A4:J53` | Publish checkbox, display name, job title, controlled department choice, leadership checkbox, public biography, controlled directory section, display order, approved work email, and portrait Drive link |
 
 For menu rows, the bridge constructs the public day, date, and meal assignment
 itself. It reads only the yellow item cells in columns D–K, so accidental text
 in the Day, Date, or Meal columns cannot be exposed.
 
-The editable menu workbook rotates Monday–Sunday and does not retain historical
-meal rows. From Monday through Saturday, the bridge therefore leaves the
-already-passed opening Sunday blank instead of relabeling the workbook’s
-upcoming Sunday meals with the wrong date. On Sunday, that day’s menu remains
+The editable private kitchen menu is Sunday-first. Its publishing function
+reorders only the sanitized menu rows into the Monday–Sunday structure expected
+by the existing public feed. From Monday through Saturday, the bridge leaves
+the already-passed opening Sunday blank. On Sunday, that day’s menu remains
 available and the not-yet-posted Monday–Saturday rows are blank. A future menu
 archive can fill this historical gap without weakening the public-data
 allowlist.

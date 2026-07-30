@@ -15,18 +15,33 @@ const ORDERS_SHEET_NAME = "Orders";
 const PRINTOUT_SHEET_NAME = "Kitchen Printout";
 const KITCHEN_MENU_SHEET_NAME = "Weekly Menu";
 const README_SHEET_NAME = "Read Me";
-const PUBLIC_MENU_SPREADSHEET_ID =
+const WEBSITE_MENU_FEED_SPREADSHEET_ID =
   "1qUxUFHaCBmZP5ygjMNX49Q1Kxjbx2QjU3MUQj5KSQdA";
-const PUBLIC_MENU_SHEET_NAME = "Menu Items";
-const PUBLIC_MENU_RANGE = "A1:K31";
-const PUBLIC_MENU_HEADER_ROWS = 3;
-const PUBLIC_MENU_ROWS_PER_DAY = 4;
-const PUBLIC_MENU_COLUMN_COUNT = 11;
+const WEBSITE_MENU_FEED_SHEET_NAME = "Menu Items";
+const WEEKLY_MENU_RANGE = "A1:K31";
+const WEEKLY_MENU_HEADER_ROWS = 3;
+const WEEKLY_MENU_ROWS_PER_DAY = 4;
+const WEEKLY_MENU_COLUMN_COUNT = 11;
 const WORKBOOK_ID_PROPERTY = "MEAL_ORDER_SPREADSHEET_ID";
 const SHARED_SECRET_PROPERTY = "MEAL_ORDER_SHARED_SECRET";
 const MAXIMUM_SPECIAL_REQUEST_LENGTH = 200;
 const MAXIMUM_FIRST_NAME_LENGTH = 40;
 const DUPLICATE_CACHE_SECONDS = 120;
+const KITCHEN_MENU_DAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+const KITCHEN_MENU_MEAL_NAMES = [
+  "Breakfast",
+  "Lunch",
+  "Dinner",
+  "Soup of the Day",
+];
 const ALTERNATIVE_MENU_MAIN_ITEMS = [
   "Hamburger",
   "Cheeseburger",
@@ -222,9 +237,9 @@ function doPost(event) {
 
 /**
  * Run once from the Apps Script editor before deploying the web app.
- * It creates a private kitchen workbook, mirrors the approved weekly menu,
- * prepares the current-meal printout, installs refresh/deletion triggers,
- * and generates a random shared secret.
+ * It creates the private kitchen workbook, makes its weekly menu the editable
+ * source of truth, prepares the current-meal printout, installs
+ * publishing/deletion triggers, and generates a random shared secret.
  */
 function setupMealOrderSystem() {
   const properties = PropertiesService.getScriptProperties();
@@ -254,10 +269,12 @@ function setupMealOrderSystem() {
   );
   configureOrdersSheet_(workbook);
   configurePrintoutSheet_(workbook);
-  refreshKitchenMenuSheet_(workbook);
+  configureKitchenMenuSheet_(workbook);
   configureReadMeSheet_(workbook);
   ensurePurgeTrigger_();
-  ensureMenuRefreshTrigger_();
+  migrateLegacyMenuRefreshTriggers_();
+  ensureMenuPublishTrigger_();
+  publishKitchenMenu_(workbook);
 
   console.log("Private order workbook created: " + workbook.getUrl());
   console.log(
@@ -308,17 +325,20 @@ function verifyMealOrderSystem() {
     throw new Error("The automatic 30-day deletion trigger is missing.");
   }
 
-  const hasMenuRefreshTrigger = ScriptApp.getProjectTriggers().some(function (
+  const hasMenuPublishTrigger = ScriptApp.getProjectTriggers().some(function (
     trigger,
   ) {
-    return trigger.getHandlerFunction() === "refreshKitchenMenu";
+    return trigger.getHandlerFunction() === "publishKitchenMenu";
   });
 
-  if (!hasMenuRefreshTrigger) {
-    throw new Error("The automatic kitchen-menu refresh trigger is missing.");
+  if (!hasMenuPublishTrigger) {
+    throw new Error(
+      "The automatic kitchen-menu publishing trigger is missing.",
+    );
   }
 
-  refreshKitchenMenuSheet_(workbook);
+  configureKitchenMenuSheet_(workbook);
+  publishKitchenMenu_(workbook);
   console.log("Meal-order system verified: " + workbook.getUrl());
 
   return true;
@@ -371,10 +391,10 @@ function purgeExpiredMealOrders() {
 
 /**
  * Runs automatically every five minutes and may also be run manually.
- * It mirrors public menu content into the private kitchen workbook without
- * moving patient orders into the public menu workbook.
+ * It publishes only the approved Weekly Menu cells to the separate website
+ * menu feed. It never reads or copies patient order rows.
  */
-function refreshKitchenMenu() {
+function publishKitchenMenu() {
   const workbookId = PropertiesService.getScriptProperties().getProperty(
     WORKBOOK_ID_PROPERTY,
   );
@@ -384,11 +404,20 @@ function refreshKitchenMenu() {
   }
 
   const workbook = SpreadsheetApp.openById(workbookId);
-  refreshKitchenMenuSheet_(workbook);
+  publishKitchenMenu_(workbook);
 
-  console.log("Kitchen menu refreshed: " + workbook.getUrl());
+  console.log("Kitchen menu published to the website feed.");
 
   return true;
+}
+
+/**
+ * Compatibility handler for the former source-to-kitchen refresh trigger.
+ * Existing triggers become safe immediately after this code is saved: they
+ * publish outward instead of overwriting the editable kitchen menu.
+ */
+function refreshKitchenMenu() {
+  return publishKitchenMenu();
 }
 
 function configureOrdersSheet_(workbook) {
@@ -486,68 +515,70 @@ function configurePrintoutSheet_(workbook) {
   sheet.getRange("A1:F200").setFontFamily("Arial");
 }
 
-function refreshKitchenMenuSheet_(workbook) {
-  const sourceWorkbook = SpreadsheetApp.openById(
-    PUBLIC_MENU_SPREADSHEET_ID,
-  );
-  const sourceSheet = sourceWorkbook.getSheetByName(
-    PUBLIC_MENU_SHEET_NAME,
-  );
-
-  if (!sourceSheet) {
-    throw new Error("The public menu source tab is not available.");
-  }
-
-  const sourceValues = sourceSheet.getRange(PUBLIC_MENU_RANGE).getValues();
-  const expectedWeeklyRows = 7 * PUBLIC_MENU_ROWS_PER_DAY;
-
-  if (
-    sourceValues.length !== PUBLIC_MENU_HEADER_ROWS + expectedWeeklyRows ||
-    sourceValues.some(function (row) {
-      return row.length !== PUBLIC_MENU_COLUMN_COUNT;
-    })
-  ) {
-    throw new Error("The public menu source has an unexpected layout.");
-  }
-
-  const headerRows = sourceValues.slice(0, PUBLIC_MENU_HEADER_ROWS);
-  const weeklyRows = sourceValues.slice(PUBLIC_MENU_HEADER_ROWS);
-  const sundayRows = weeklyRows.slice(
-    expectedWeeklyRows - PUBLIC_MENU_ROWS_PER_DAY,
-  );
-  const mondayThroughSaturdayRows = weeklyRows.slice(
-    0,
-    expectedWeeklyRows - PUBLIC_MENU_ROWS_PER_DAY,
-  );
-  const displayValues = headerRows
-    .concat(sundayRows, mondayThroughSaturdayRows)
-    .map(function (row) {
-      return row.slice();
-    });
-
-  displayValues[0][0] = "KITCHEN WEEKLY MENU";
-  displayValues[0][3] =
-    "AUTOMATICALLY REFRESHED FROM HILLSIDE WEBSITE MENU";
-  displayValues[1][0] = "READ-ONLY MIRROR";
-  displayValues[1][3] =
-    "Edit the Hillside Website Menu workbook; changes appear here within five minutes.";
-
+function configureKitchenMenuSheet_(workbook) {
   let sheet = workbook.getSheetByName(KITCHEN_MENU_SHEET_NAME);
 
   if (!sheet) {
     sheet = workbook.insertSheet(KITCHEN_MENU_SHEET_NAME, 1);
   }
 
-  sheet.getRange(1, 1, 2, PUBLIC_MENU_COLUMN_COUNT).breakApart();
-  sheet.clear();
+  const expectedWeeklyRows =
+    KITCHEN_MENU_DAY_NAMES.length * WEEKLY_MENU_ROWS_PER_DAY;
+  const dayValues = [];
+  const dateFormulas = [];
+  const mealValues = [];
+
+  for (let rowIndex = 0; rowIndex < expectedWeeklyRows; rowIndex += 1) {
+    const dayIndex = Math.floor(rowIndex / WEEKLY_MENU_ROWS_PER_DAY);
+    const mealIndex = rowIndex % WEEKLY_MENU_ROWS_PER_DAY;
+
+    dayValues.push([KITCHEN_MENU_DAY_NAMES[dayIndex]]);
+    dateFormulas.push([
+      rowIndex === 0
+        ? "=TODAY()-WEEKDAY(TODAY(),1)+1"
+        : "=$B$4+" + dayIndex,
+    ]);
+    mealValues.push([KITCHEN_MENU_MEAL_NAMES[mealIndex]]);
+  }
+
+  sheet.getRange(1, 1, 2, WEEKLY_MENU_COLUMN_COUNT).breakApart();
+  sheet.getRange("A1").setValue("KITCHEN WEEKLY MENU");
+  sheet
+    .getRange("D1")
+    .setValue("EDIT THIS MENU — WEBSITE PUBLISHES AUTOMATICALLY");
+  sheet.getRange("A2").setValue("EDITABLE SOURCE");
+  sheet
+    .getRange("D2")
+    .setValue(
+      "Enter one food in each yellow cell. Changes reach the website feed within five minutes.",
+    );
+  sheet
+    .getRange("A3:K3")
+    .setValues([
+      [
+        "Day",
+        "Date",
+        "Meal",
+        "Item 1",
+        "Item 2",
+        "Item 3",
+        "Item 4",
+        "Item 5",
+        "Item 6",
+        "Item 7",
+        "Item 8",
+      ],
+    ]);
+  sheet.getRange(4, 1, expectedWeeklyRows, 1).setValues(dayValues);
+  sheet.getRange(4, 2, expectedWeeklyRows, 1).setFormulas(dateFormulas);
+  sheet.getRange(4, 3, expectedWeeklyRows, 1).setValues(mealValues);
   sheet
     .getRange(
       1,
       1,
-      displayValues.length,
-      PUBLIC_MENU_COLUMN_COUNT,
+      WEEKLY_MENU_HEADER_ROWS + expectedWeeklyRows,
+      WEEKLY_MENU_COLUMN_COUNT,
     )
-    .setValues(displayValues)
     .setFontFamily("Arial")
     .setVerticalAlignment("middle")
     .setWrap(true);
@@ -587,18 +618,134 @@ function refreshKitchenMenuSheet_(workbook) {
     .setHorizontalAlignment("left");
   sheet.getRange("B4:B31").setNumberFormat("mmm d");
   sheet.setFrozenRows(3);
+  sheet.setFrozenColumns(3);
   sheet.setHiddenGridlines(true);
   sheet.setColumnWidth(1, 110);
   sheet.setColumnWidth(2, 90);
   sheet.setColumnWidth(3, 130);
 
-  for (let column = 4; column <= PUBLIC_MENU_COLUMN_COUNT; column += 1) {
+  for (let column = 4; column <= WEEKLY_MENU_COLUMN_COUNT; column += 1) {
     sheet.setColumnWidth(column, 150);
   }
 
   sheet.setRowHeight(1, 34);
   sheet.setRowHeight(2, 44);
   sheet.setRowHeights(3, 29, 34);
+}
+
+function publishKitchenMenu_(workbook) {
+  const sourceSheet = workbook.getSheetByName(KITCHEN_MENU_SHEET_NAME);
+
+  if (!sourceSheet) {
+    throw new Error("The editable kitchen menu tab is not available.");
+  }
+
+  const sourceValues = sourceSheet.getRange(WEEKLY_MENU_RANGE).getValues();
+  const expectedWeeklyRows =
+    KITCHEN_MENU_DAY_NAMES.length * WEEKLY_MENU_ROWS_PER_DAY;
+
+  if (
+    sourceValues.length !== WEEKLY_MENU_HEADER_ROWS + expectedWeeklyRows ||
+    sourceValues.some(function (row) {
+      return row.length !== WEEKLY_MENU_COLUMN_COUNT;
+    })
+  ) {
+    throw new Error("The editable kitchen menu has an unexpected layout.");
+  }
+
+  const weeklyRows = sourceValues.slice(WEEKLY_MENU_HEADER_ROWS);
+  const sundayRows = weeklyRows.slice(0, WEEKLY_MENU_ROWS_PER_DAY);
+  const mondayThroughSaturdayRows = weeklyRows.slice(
+    WEEKLY_MENU_ROWS_PER_DAY,
+  );
+  const websiteOrderRows = mondayThroughSaturdayRows.concat(sundayRows);
+  const websiteDayNames = KITCHEN_MENU_DAY_NAMES.slice(1).concat("Sunday");
+  const currentSunday = getCurrentFacilitySunday_();
+  const publishedRows = websiteOrderRows.map(function (row, rowIndex) {
+    const dayIndex = Math.floor(rowIndex / WEEKLY_MENU_ROWS_PER_DAY);
+    const mealIndex = rowIndex % WEEKLY_MENU_ROWS_PER_DAY;
+    const dateOffset = dayIndex === 6 ? 0 : dayIndex + 1;
+    const itemValues = row
+      .slice(3, WEEKLY_MENU_COLUMN_COUNT)
+      .map(sanitizeMenuFeedItem_);
+
+    return [
+      websiteDayNames[dayIndex],
+      addDaysToDate_(currentSunday, dateOffset),
+      KITCHEN_MENU_MEAL_NAMES[mealIndex],
+    ].concat(itemValues);
+  });
+  const headerRow = [
+    "Day",
+    "Date",
+    "Meal",
+    "Item 1",
+    "Item 2",
+    "Item 3",
+    "Item 4",
+    "Item 5",
+    "Item 6",
+    "Item 7",
+    "Item 8",
+  ];
+
+  const targetWorkbook = SpreadsheetApp.openById(
+    WEBSITE_MENU_FEED_SPREADSHEET_ID,
+  );
+  const targetSheet = targetWorkbook.getSheetByName(
+    WEBSITE_MENU_FEED_SHEET_NAME,
+  );
+
+  if (!targetSheet) {
+    throw new Error("The website menu feed tab is not available.");
+  }
+
+  targetSheet.getRange("A1").setValue("PUBLIC WEBSITE MENU FEED");
+  targetSheet
+    .getRange("D1")
+    .setValue("AUTOMATICALLY PUBLISHED FROM THE PRIVATE KITCHEN MENU");
+  targetSheet.getRange("A2").setValue("READ-ONLY FEED");
+  targetSheet
+    .getRange("D2")
+    .setValue(
+      "Edit Weekly Menu in the private kitchen workbook; do not edit this feed.",
+    );
+  targetSheet
+    .getRange(
+      3,
+      1,
+      1 + publishedRows.length,
+      WEEKLY_MENU_COLUMN_COUNT,
+    )
+    .setValues([headerRow].concat(publishedRows));
+  SpreadsheetApp.flush();
+}
+
+function getCurrentFacilitySunday_() {
+  const currentDateText = Utilities.formatDate(
+    new Date(),
+    FACILITY_TIME_ZONE,
+    "yyyy-MM-dd",
+  );
+  const currentDate = parseFacilityDateTime_(currentDateText, "12:00");
+  const dayNumber = Number(
+    Utilities.formatDate(currentDate, FACILITY_TIME_ZONE, "u"),
+  );
+
+  return addDaysToDate_(currentDate, -(dayNumber % 7));
+}
+
+function addDaysToDate_(date, days) {
+  return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
+}
+
+function sanitizeMenuFeedItem_(value) {
+  const normalized = String(value || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .slice(0, 120);
+
+  return protectCellText_(normalized);
 }
 
 function configureReadMeSheet_(workbook) {
@@ -611,12 +758,15 @@ function configureReadMeSheet_(workbook) {
   sheet.clear();
   sheet.getRange("A1").setValue("Private Hillside meal-order workbook");
   sheet.getRange("A1").setFontSize(18).setFontWeight("bold");
-  sheet.getRange("A3:A12").setValues([
+  sheet.getRange("A3:A13").setValues([
     [
       "This workbook contains identifiable patient meal requests. Share it only with staff approved for this workflow.",
     ],
     [
-      "Kitchen staff: use Weekly Menu for the current menu and Kitchen Printout for the current alternative-meal orders.",
+      "Kitchen staff: edit the yellow cells in Weekly Menu. That tab is the only menu staff need to maintain.",
+    ],
+    [
+      "Weekly Menu publishes only its approved menu cells to the website feed every five minutes. It never publishes patient order rows.",
     ],
     [
       "RS staff: open the Kitchen Printout tab and print the current sheet at lunch or dinner.",
@@ -644,8 +794,8 @@ function configureReadMeSheet_(workbook) {
     ],
   ]);
   sheet.setColumnWidth(1, 850);
-  sheet.getRange("A1:A12").setWrap(true).setVerticalAlignment("top");
-  sheet.getRange("A3:A12").setFontSize(11);
+  sheet.getRange("A1:A13").setWrap(true).setVerticalAlignment("top");
+  sheet.getRange("A3:A13").setFontSize(11);
 }
 
 function ensurePurgeTrigger_() {
@@ -662,13 +812,21 @@ function ensurePurgeTrigger_() {
   }
 }
 
-function ensureMenuRefreshTrigger_() {
+function migrateLegacyMenuRefreshTriggers_() {
+  ScriptApp.getProjectTriggers().forEach(function (trigger) {
+    if (trigger.getHandlerFunction() === "refreshKitchenMenu") {
+      ScriptApp.deleteTrigger(trigger);
+    }
+  });
+}
+
+function ensureMenuPublishTrigger_() {
   const hasTrigger = ScriptApp.getProjectTriggers().some(function (trigger) {
-    return trigger.getHandlerFunction() === "refreshKitchenMenu";
+    return trigger.getHandlerFunction() === "publishKitchenMenu";
   });
 
   if (!hasTrigger) {
-    ScriptApp.newTrigger("refreshKitchenMenu")
+    ScriptApp.newTrigger("publishKitchenMenu")
       .timeBased()
       .everyMinutes(5)
       .create();

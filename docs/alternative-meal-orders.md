@@ -26,9 +26,10 @@ Patient orders remain separate from the public schedule/menu/staff bridge.
 - The Apps Script validates the request again before writing it.
 - The private kitchen workbook is not public and must be shared only with
   approved Hillside staff.
-- A `Weekly Menu` tab mirrors only the approved public menu content into the
-  private kitchen workbook. It never copies order rows into the public menu
-  workbook.
+- The private workbook’s `Weekly Menu` tab is the only editable menu source.
+- Every five minutes, the private Apps Script publishes only the approved
+  weekly-menu cells to the separate website feed. It never reads or copies
+  order rows into that feed.
 - Orders are permanently deleted 30 days after the requested meal.
 
 The patient form is internet-accessible by design. A patient may submit from
@@ -116,12 +117,17 @@ The private kitchen workbook is:
 
 Its `Weekly Menu` tab:
 
-- shows the same approved menu content used by the website;
+- is the editable source of truth for the menu used by the website;
 - lists Sunday first;
-- refreshes automatically every five minutes after the updated setup function
-  has been run;
-- is a read-only operational copy—the editable source remains the separate
-  `Hillside Website Menu` workbook.
+- accepts one food per yellow Item cell;
+- publishes only its menu cells to the website feed automatically every five
+  minutes after the updated setup function has been run;
+- is the only menu workbook kitchen staff need to open.
+
+The separate `Hillside Website Menu` workbook is now a read-only technical feed.
+Do not edit it. The public bridge continues to read only `Menu Items!D4:K31`,
+so patient orders and the private workbook’s other tabs can never reach the
+public site.
 
 Its `Kitchen Printout` tab:
 
@@ -132,9 +138,28 @@ Its `Kitchen Printout` tab:
   private `Orders` tab;
 - is intended to be printed as the current sheet by approved RS staff.
 
-The Apps Script creates a five-minute menu refresh trigger and a daily trigger
-that permanently deletes each source order 30 days after that order's requested
-serving time.
+The Apps Script creates a five-minute menu publishing trigger and a daily
+trigger that permanently deletes each source order 30 days after that order's
+requested serving time.
+
+## Change an existing installation to kitchen-first editing
+
+1. Replace the private meal-order Apps Script project’s `Code.gs` with the
+   complete current file from `google-apps-script-meal-orders/Code.gs`.
+2. Save the script.
+3. Run `setupMealOrderSystem` once. This removes the old trigger that copied
+   the website menu into the kitchen workbook, preserves the existing yellow
+   menu-item cells, and installs the new outward publishing trigger.
+4. Run `verifyMealOrderSystem`.
+5. Open the private workbook and confirm `Weekly Menu` says `EDITABLE SOURCE`
+   and `EDIT THIS MENU — WEBSITE PUBLISHES AUTOMATICALLY`.
+6. Make one synthetic menu edit in an unused yellow cell, run
+   `publishKitchenMenu`, and confirm the same value appears in the website
+   preview within five minutes. Remove the synthetic value afterward.
+
+The compatibility `refreshKitchenMenu` function also publishes outward. This
+prevents an old trigger from overwriting the kitchen menu during the brief
+period between saving the new code and rerunning setup.
 
 ## Safe launch checklist
 
