@@ -20,7 +20,7 @@ import {
 const feedRevalidationSeconds = 300;
 const maximumResponseCharacters = 500_000;
 const maximumGroupsPerProgram = 12;
-const maximumActivitiesPerDay = 6;
+const maximumActivitiesPerDay = 8;
 const maximumMenuItemsPerMeal = 8;
 const maximumStaffMembers = 50;
 const maximumDepartmentsPerStaffMember = 2;
@@ -37,6 +37,18 @@ const sundayFirstWeekDays = [
   "Friday",
   "Saturday",
 ] as const satisfies readonly WeekDay[];
+const cssRecurringActivities = [
+  {
+    time: "10:00 AM",
+    timeValue: "10:00",
+    title: "Gym",
+  },
+  {
+    time: "8:00 PM",
+    timeValue: "20:00",
+    title: "Gym",
+  },
+] as const satisfies readonly ScheduleActivity[];
 
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 const displayTimePattern = /^(\d{1,2}):([0-5]\d) (AM|PM)$/;
@@ -336,6 +348,35 @@ function parseWeeklyProgramSchedule(
     title: code,
     days: days as ScheduleDay[],
   };
+}
+
+function addRecurringScheduleActivities(
+  schedules: WeeklyProgramSchedule[],
+): WeeklyProgramSchedule[] {
+  return schedules.map((schedule) => {
+    if (schedule.title !== "CSS") {
+      return schedule;
+    }
+
+    return {
+      ...schedule,
+      days: schedule.days.map((day) => ({
+        ...day,
+        activities: [
+          ...day.activities,
+          ...cssRecurringActivities.filter(
+            (recurringActivity) =>
+              !day.activities.some(
+                (activity) =>
+                  activity.timeValue === recurringActivity.timeValue &&
+                  activity.title.toLocaleLowerCase() ===
+                    recurringActivity.title.toLocaleLowerCase(),
+              ),
+          ),
+        ],
+      })),
+    };
+  });
 }
 
 function parseLegacyProgramSchedule(
@@ -681,7 +722,9 @@ function parsePublicData(value: unknown): HillsidePublicData | null {
     generatedAt,
     scheduleDate,
     weekLabel,
-    schedules: schedules as WeeklyProgramSchedule[],
+    schedules: addRecurringScheduleActivities(
+      schedules as WeeklyProgramSchedule[],
+    ),
     menu: menu as MenuDay[],
     staff,
   };
