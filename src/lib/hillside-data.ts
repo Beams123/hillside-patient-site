@@ -18,6 +18,7 @@ import {
 } from "@/types/hillside-data";
 
 const feedRevalidationSeconds = 300;
+const feedRequestTimeoutMilliseconds = 15_000;
 const maximumResponseCharacters = 500_000;
 const maximumGroupsPerProgram = 12;
 const maximumActivitiesPerDay = 8;
@@ -778,7 +779,7 @@ export async function getHillsidePublicData(): Promise<HillsideDataResult> {
     const response = await fetch(feedUrl, {
       headers: { Accept: "application/json" },
       next: { revalidate: feedRevalidationSeconds },
-      signal: AbortSignal.timeout(5_000),
+      signal: AbortSignal.timeout(feedRequestTimeoutMilliseconds),
     });
 
     if (!response.ok) {

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, Mail, Phone } from "lucide-react";
+import { ArrowLeft, Mail, Phone, UsersRound } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { AmbientHillsideSign } from "@/components/ambient-hillside-sign";
@@ -13,23 +13,41 @@ type StaffProfilePageProps = {
   params: Promise<{ slug: string }>;
 };
 
-async function getStaffMember(slug: string) {
+async function getStaffMemberResult(slug: string) {
   const dataResult = await getHillsidePublicData();
 
   if (dataResult.status !== "available") {
-    return null;
+    return {
+      status: "unavailable" as const,
+      member: null,
+    };
   }
 
-  return (
-    dataResult.data.staff.find((member) => member.slug === slug) ?? null
-  );
+  return {
+    status: "available" as const,
+    member:
+      dataResult.data.staff.find((member) => member.slug === slug) ?? null,
+  };
+}
+
+export async function generateStaticParams() {
+  const dataResult = await getHillsidePublicData();
+
+  if (dataResult.status !== "available") {
+    return [];
+  }
+
+  return dataResult.data.staff.map((member) => ({
+    slug: member.slug,
+  }));
 }
 
 export async function generateMetadata({
   params,
 }: StaffProfilePageProps): Promise<Metadata> {
   const { slug } = await params;
-  const member = await getStaffMember(slug);
+  const profileResult = await getStaffMemberResult(slug);
+  const member = profileResult.member;
 
   if (!member) {
     return {
@@ -43,11 +61,69 @@ export async function generateMetadata({
   };
 }
 
+function StaffProfileUnavailable() {
+  return (
+    <div id="top" className="min-h-screen overflow-x-clip bg-background">
+      <a
+        href="#main-content"
+        className="fixed left-4 top-4 z-[100] -translate-y-24 rounded-md bg-brand-gold px-4 py-3 text-sm font-semibold text-brand-ink transition-transform focus:translate-y-0"
+      >
+        Skip to main content
+      </a>
+
+      <SiteHeader />
+
+      <main id="main-content" tabIndex={-1}>
+        <section
+          aria-labelledby="profile-unavailable-heading"
+          className="ambient-hero-section relative isolate overflow-hidden"
+        >
+          <AmbientHillsideSign />
+          <div className="mx-auto w-full max-w-7xl px-5 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
+            <div className="sm:max-w-[52%]">
+              <Link
+                href="/staff"
+                className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-gold transition-colors hover:text-brand-gold-light"
+              >
+                <ArrowLeft className="size-4" aria-hidden="true" />
+                Back to staff directory
+              </Link>
+              <UsersRound
+                className="mt-10 size-8 text-brand-gold"
+                strokeWidth={1.75}
+                aria-hidden="true"
+              />
+              <h1
+                id="profile-unavailable-heading"
+                className="mt-5 text-balance text-4xl font-semibold leading-tight tracking-[-0.04em] text-brand-cream sm:text-5xl"
+              >
+                This staff profile is temporarily unavailable
+              </h1>
+              <p className="mt-5 max-w-xl leading-7 text-brand-muted">
+                The staff directory connection did not respond in time. Please
+                return to the directory and try again shortly.
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <SiteFooter />
+    </div>
+  );
+}
+
 export default async function StaffProfilePage({
   params,
 }: StaffProfilePageProps) {
   const { slug } = await params;
-  const member = await getStaffMember(slug);
+  const profileResult = await getStaffMemberResult(slug);
+
+  if (profileResult.status !== "available") {
+    return <StaffProfileUnavailable />;
+  }
+
+  const member = profileResult.member;
 
   if (!member) {
     notFound();
